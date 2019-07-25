@@ -1,0 +1,93 @@
+## Build output -------------------------------------------------------------
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+## Visual Studio / IDE ------------------------------------------------------
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+*.rsuser
+*.dbmdl
+*.dbproj.schemaview
+*.jfm
+*.pfx
+*.publishsettings
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+.vscode/
+.idea/
+
+## Intermediate / compiler artifacts ---------------------------------------
+*.pdb
+*.ilk
+*.obj
+*.iobj
+*.ipdb
+*.tlog
+*.cache
+*.tmp
+*.log
+*.err
+*.pidb
+*.svclog
+*.scc
+*.ncb
+*.aps
+*.bak
+*.orig
+*.rej
+
+## Assembly / debugger databases -------------------------------------------
+# IDA Pro
+*.idb
+*.i64
+*.id0
+*.id1
+*.id2
+*.nam
+*.til
+*.asm.bak
+# .NET / native symbols
+*.pd_
+*.dbg
+*.map
+*.exp
+*.lib
+*.res
+*.resources
+
+## NuGet / packages ---------------------------------------------------------
+packages/
+*.nupkg
+*.snupkg
+.nuget/
+project.lock.json
+project.assets.json
+*.nuget.props
+*.nuget.targets
+
+## Test / coverage ----------------------------------------------------------
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.coverage
+*.coveragexml
+coverage*.json
+coverage*.xml
+coverage*.info
+BenchmarkDotNet.Artifacts/
+
+## OS junk ------------------------------------------------------------------
+Thumbs.db
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+*.swp
+*~
