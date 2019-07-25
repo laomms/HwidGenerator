@@ -367,7 +367,7 @@ text:00B4A3B7 push    ecx                             ; int
 .text:00B4A440 push    ecx                             ; const void *(__stdcall *)(unsigned int *, unsigned int *)
 .text:00B4A441 call    ?VRSAVaultSignPKCS@@YGJP6GPBXPAK0@ZP6GHPAXPBX@ZIPBEKPAE0@Z ; VRSAVaultSignPKCS(void const * (*)(ulong *,ulong *),int (*)(void *,void const *),uint,uchar const *,ulong,uchar *,ulong *)
 .text:00B4A446 mov     ebx, eax
-RSA转换数组:5e 14 d6 fd 4e 02 23 fd d0 da 34 30 14 96 cd 69 c5 fb 7e f5 be ee 89 8a 86 13 92 d6 57 96 6c 02 11 b0 2f b5 15 14 cc e5 25 ec 34 be bd ea fd c6 c7 c5 3c 30 ab eb 62 5f 66 ac b5 d0 b6 31 63 cc 2f 88 ac e4 2a cd 6e 21 07 b9 67
+RSA签名数组:5e 14 d6 fd 4e 02 23 fd d0 da 34 30 14 96 cd 69 c5 fb 7e f5 be ee 89 8a 86 13 92 d6 57 96 6c 02 11 b0 2f b5 15 14 cc e5 25 ec 34 be bd ea fd c6 c7 c5 3c 30 ab eb 62 5f 66 ac b5 d0 b6 31 63 cc 2f 88 ac e4 2a cd 6e 21 07 b9 67
                         
 .text:00B4A45E lea     ecx, [ebp+var_108]
 .text:00B4A464 call    Base64Encod  
