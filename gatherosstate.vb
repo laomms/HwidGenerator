@@ -110,6 +110,7 @@ text:00B859C6 mov     ecx, dword ptr [ebp+var_20.Data4]
 .text:00B89B84 loc_B89B84:                             ; CODE XREF: CollectInternal+11B↑j
 .text:00B89B84 mov     [esp+74h+DeviceInfoData.cbSize], 1Ch
 .text:00B89B8C call    ds:__imp__SetupDiEnumDeviceInfo@12 ; load__SetupDiEnumDeviceInfo(x,x,x) ...
+            反编译后已经有GUID列表,从列表可以看出微软的HWID跟那些硬件有关
         MyGuid=GUID_DEVCLASS_CDROM,GUID_DEVCLASS_..
         Dim hdevDisplayInfoSet As IntPtr = SetupDiGetClassDevsW(MyGuid, IntPtr.Zero, IntPtr.Zero, DIGCF_PRESENT)
         If (hdevDisplayInfoSet <> IntPtr.Zero) Then
