@@ -205,24 +205,16 @@ text:00B49896 push    offset aHwidS                   ; "Hwid=%s;"
      SLGetSLIDList(hSLC, SLIDTYPE.SL_ID_PRODUCT_SKU, bSkuId, SLIDTYPE.SL_ID_APPLICATION, pnStatusCount, ppReturnId)
      
      
-.text:00B498FE push    [esp+204h+var_15C]
-.text:00B49905 lea     edx, [esp+208h+FileTime]
-.text:00B4990C lea     ecx, [esp+208h+SystemTimeAsFileTime]
-.text:00B49910 call    AddTimeDelta
-.text:00B49915 mov     esi, eax
-.text:00B49917 test    esi, esi
-.text:00B49919 js      loc_B49BC0
-.text:00B4991F lea     eax, [esp+200h+SystemTime]
-.text:00B49926 push    eax                             ; lpSystemTime
-.text:00B49927 lea     eax, [esp+204h+FileTime]
-.text:00B4992B push    eax                             ; lpFileTime
-.text:00B4992C call    ds:__imp__FileTimeToSystemTime@8 ; FileTimeToSystemTime(x,x)
-.text:00B49932 test    eax, eax
-.text:00B49934 jz      loc_B497AB
-.text:00B4993A lea     edx, [esp+200h+var_1C4]
-.text:00B4993E lea     ecx, [esp+200h+SystemTime]
-.text:00B49945 call    UtcTimeToIso8601
-拼接时间:
+.text:00B4A2A0 lea     edx, [ebp+var_158]
+.text:00B4A2A6 mov     ecx, offset aTimestampclien     ; "TimeStampClient"
+.text:00B4A2AB call    Create
+.text:00B4A2B0 mov     ebx, eax
+.text:00B4A2B2 test    ebx, ebx
+.text:00B4A2B4 js      loc_B4A13E
+.text:00B4A2BA lea     edx, [ebp+var_154]
+.text:00B4A2C0 lea     ecx, [ebp+SystemTime]
+.text:00B4A2C6 call    UtcTimeToIso8601
+拼接时间:20xx-07-25T14:56:25Z
 
 .text:00B49A01 mov     ecx, [esp+208h+var_1D4]
 .text:00B49A05 lea     edx, ds:2[eax*2]
@@ -238,10 +230,14 @@ text:00B49896 push    offset aHwidS                   ; "Hwid=%s;"
 .text:00B499C1 push    eax                             ; pdwValue
 .text:00B499C2 push    offset pwszValueName            ; "Security-SPP-GenuineLocalStatus"
 .text:00B499C7 call    ds:__imp__SLGetWindowsInformationDWORD@8 ; load__SLGetWindowsInformationDWORD(x,x) ...
+拼接字符串:SL_GET_GENUINE_AUTHZ:TwBTAE0AYQBqAG8AcgBWAGUAcgBzAGkAbwBuAD0AMQAwADsATwBTAE0AaQBuAG8AcgBWAGUAcgBzAGk(取80位)
 判断系统激活状态
 hInf = SLGetWindowsInformationDWORD("Security-SPP-GenuineLocalStatus", LocalStatus)
     
-
+.text:00B4A241 mov     ecx, offset aSessionid          ; "SessionId"
+.text:00B4A246 call    Create
+拼接SessionId：SessionId=TwBTAE0AYQBqAG8AcgBWAGUAcgBzAGkAbwBuAD0AMQAwADsATwBTAE0AaQBuAG8AcgBWAGUAcgBzAGkAbwBuAD0AMA          
+                        
 .text:00B49A98 lea     eax, [esp+200h+lpMem]
 .text:00B49A9C push    eax
 .text:00B49A9D push    ecx
@@ -339,12 +335,214 @@ hInf = SLGetWindowsInformationDWORD("Security-SPP-GenuineLocalStatus", LocalStat
 .text:00B8D1A5 call    ?GetProductKeyForEdition@@YGJKW4_CHANNEL_ENUM@@W4_PARTNER_ENUM@@PAPAG2@Z ; GetProductKeyForEdition(ulong,_CHANNEL_ENUM,_PARTNER_ENUM,ushort * *,ushort * *)
 .text:00B8D1AA mov     ebx, eax
 .text:00B8D1AC test    ebx, ebx
+.....
+.text:00B49ADC push    [esp+200h+var_1C0]              ;根据密钥版本及SKU查询列表中的windows密钥版本 "Microsoft.Windows.48.X19-98841_8wekyb3d8bbwe"   
+.text:00B49AE0 push    offset aPfnS                    ; "Pfn=%s;"
 
+text:00B4A36C push    0F0000020h                      ; dwFlags
+.text:00B4A371 push    18h                             ; dwProvType
+.text:00B4A373 push    offset szProvider               ; "Microsoft Enhanced RSA and AES Cryptogr"...
+.text:00B4A378 push    ebx                             ; szContainer
+.text:00B4A379 lea     eax, [ebp+phProv]
+.text:00B4A37F push    eax                             ; phProv
+.text:00B4A380 call    ds:__imp__CryptAcquireContextW@20 ; CryptAcquireContextW(x,x,x,x,x)
+ 取字固定符串:microsoft enhanced rsa and aes cryptographic provider
 
-
-
-
-
-
-
+text:00B4A3B7 push    ecx                             ; int
+.text:00B4A3B8 push    eax                             ; int
+.text:00B4A3B9 push    0                               ; BYTE *
+.text:00B4A3BB push    [ebp+dwDataLen]                 ; dwDataLen
+.text:00B4A3C1 lea     ecx, [ebp+phProv]
+.text:00B4A3C7 push    esi                             ; BYTE *
+.text:00B4A3C8 call    ?ComputeHash@?$CCryptoApiHelperT@VCMSRSAAESCryptoApiHelper@@@@QAEJPBXKPAXPAKI@Z ; CCryptoApiHelperT<CMSRSAAESCryptoApiHelper>::ComputeHash(void const *,ulong,void *,ulong *,uint)
+.text:00B4A3CD mov     ebx, eax
+加密字符串:SessionId=TwBTAE0AYQBqAG8AcgBWAGUAcgBzAGkAbwBuAD0AMQAwADsATwBTAE0AaQBuAG8AcgBWAGUAcgBzAGkAbwBuAD0AMAA7AE8AUwBQAGwAYQB0AGYAbwByAG0ASQBkAD0AMgA7AFAAUAA9ADAAOwBIAHcAaQBkAD0AYQBRAEEAQQBBAEIATQBBAFAAZwBBAEEAQQBBAEEAQQBBAFEAQQBDAEEAQQBJAEEAQQB
+                        
+.text:00B4A42B push    eax                             ; unsigned int
+.text:00B4A42C lea     eax, [ebp+var_108]
+.text:00B4A432 push    eax                             ; unsigned __int8 *
+.text:00B4A433 push    [ebp+dwBytes]                   ; unsigned int
+.text:00B4A439 mov     eax, [ebp+lpMem]
+.text:00B4A43F push    eax                             ; int (__stdcall *)(void *, const void *)
+.text:00B4A440 push    ecx                             ; const void *(__stdcall *)(unsigned int *, unsigned int *)
+.text:00B4A441 call    ?VRSAVaultSignPKCS@@YGJP6GPBXPAK0@ZP6GHPAXPBX@ZIPBEKPAE0@Z ; VRSAVaultSignPKCS(void const * (*)(ulong *,ulong *),int (*)(void *,void const *),uint,uchar const *,ulong,uchar *,ulong *)
+.text:00B4A446 mov     ebx, eax
+RSA转换数组:5e 14 d6 fd 4e 02 23 fd d0 da 34 30 14 96 cd 69 c5 fb 7e f5 be ee 89 8a 86 13 92 d6 57 96 6c 02 11 b0 2f b5 15 14 cc e5 25 ec 34 be bd ea fd c6 c7 c5 3c 30 ab eb 62 5f 66 ac b5 d0 b6 31 63 cc 2f 88 ac e4 2a cd 6e 21 07 b9 67
+                        
+.text:00B4A45E lea     ecx, [ebp+var_108]
+.text:00B4A464 call    Base64Encod  
+BASE64加密: XhTW/U4CI/3Q2jQwFJbNacX7fvW+7omKhhOS1leWbAIRsC+1FRTM5SXsNL696v3Gx8U8MKvrYl9mrLXQtjFjzC+IrOQqzW4hB7ln
+                        
+.text:00B4A473 lea     edx, [ebp+var_1B8]
+.text:00B4A479 mov     ecx, offset aDownlevelgtkey     ; "downlevelGTkey"
+.text:00B4A47E call    Create
+.text:00B4A483 mov     ebx, eax
+.text:00B4A485 test    ebx, ebx
+.text:00B4A487 js      loc_B4A13E
+.text:00B4A48D lea     edx, [ebp+var_1B0]
+.text:00B4A493 mov     ecx, offset aBgiaaackaabsu0     ; BgIAAACkAABSU0ExAAgAAAEAAQARq+V11k+dvHMCaLWVCaSbeQNlOdWTLkkl0hdMh5V3YhLU2R4h0Jd+7k7qfZ4aIo4ussduwGgm
+.text:00B4A498 call    Create
+.text:00B4A49D mov     ebx, eax
+.text:00B4A49F test    ebx, ebx
+.text:00B4A4A1 js      loc_B4A13E
+.text:00B4A4A7 lea     eax, [ebp+var_1B8]
+.text:00B4A4AD push    eax
+.text:00B4A4AE push    [ebp+var_190]
+.text:00B4A4B4 lea     ecx, [ebp+var_194]
+.text:00B4A4BA call    ?Insert@?$CArray@UCGenuineSignature@@U1@VCAdaptorDefault@@VCPoliciesDefault@@@@QAEJHABUCGenuineSignature@@@Z ; CArray<CGenuineSignature,CGenuineSignature,CAdaptorDefault,CPoliciesDefault>::Insert(int,CGenuineSignature const &)
+.text:00B4A4BF mov     ebx, eax
+.text:00B4A4C1 test    ebx, ebx
+.text:00B4A4C3 js      loc_B4A13E
+.text:00B4A4C9 lea     eax, [ebp+var_19C]
+.text:00B4A4CF push    eax
+.text:00B4A4D0 push    0
+.text:00B4A4D2 lea     ecx, [ebp+var_1A8]
+.text:00B4A4D8 call    ?Insert@?$CArray@U?$CSignedGenuinePropertiesT@VCEmptyType@@@@U1@VCAdaptorDefault@@VCPoliciesDefault@@@@QAEJHABU?$CSignedGenuinePropertiesT@VCEmptyType@@@@@Z ; CArray<CSignedGenuinePropertiesT<CEmptyType>,CSignedGenuinePropertiesT<CEmptyType>,CAdaptorDefault,CPoliciesDefault>::Insert(int,CSignedGenuinePropertiesT<CEmptyType> const &)
+.text:00B4A4DD mov     ebx, eax
+.text:00B4A4DF test    ebx, ebx
+.text:00B4A4E1 js      loc_B4A13E
+.text:00B4A4E7 lea     eax, [ebp+var_160]
+.text:00B4A4ED push    eax                             ; unsigned int *
+.text:00B4A4EE lea     eax, [ebp+var_164]
+.text:00B4A4F4 push    eax                             ; unsigned __int8 **
+.text:00B4A4F5 lea     ecx, [ebp+var_1A8]              ; this
+.text:00B4A4FB call    ?Serialize@CGenuineAuthorizationEnvelope@@QAEJPAPAEPAK@Z ; CGenuineAuthorizationEnvelope::Serialize(uchar * *,ulong *)
+...
+.text:00B4A691 mov     esi, [ebp+var_4]
+.text:00B4A694 lea     eax, [ebp+var_14]
+.text:00B4A697 push    esi
+.text:00B4A698 push    offset aPropertiesSPro          ; "<properties>%s</properties>"
+.text:00B4A69D push    eax
+.text:00B4A69E call    GatherOsInformation
+.text:00B4A6A3 mov     edi, eax
+.text:00B4A6A5 add     esp, 0Ch
+.text:00B4A6A8 test    edi, edi
+.text:00B4A6AA js      loc_B4A7DB
+.text:00B4A6B0 push    offset aSignatures_0            ; "<signatures>"
+.text:00B4A6B5 lea     ecx, [ebp+var_14]
+.text:00B4A6B8 call    Append
+.text:00B4A6BD mov     edi, eax
+.text:00B4A6BF test    edi, edi
+.text:00B4A6C1 js      loc_B4A7DB
+.text:00B4A6C7 xor     eax, eax
+.text:00B4A6C9 mov     [ebp+var_8], eax
+.text:00B4A6CC cmp     [ebx+0Ch], eax
+.text:00B4A6CF jle     loc_B4A7A4
+.text:00B4A6D5 mov     [ebp+var_4], eax
+.text:00B4A6D8
+.text:00B4A6D8 loc_B4A6D8:                             ; CODE XREF: Serialize+195↓j
+.text:00B4A6D8 push    offset aSignature               ; "<signature"
+.text:00B4A6DD lea     ecx, [ebp+var_14]
+.text:00B4A6E0 call    Append
+.text:00B4A6E5 mov     edi, eax
+.text:00B4A6E7 test    edi, edi
+.text:00B4A6E9 js      loc_B4A7DB
+.text:00B4A6EF mov     eax, [ebx+10h]
+.text:00B4A6F2 mov     ecx, [ebp+var_4]
+.text:00B4A6F5 push    dword ptr [ecx+eax]
+.text:00B4A6F8 lea     eax, [ebp+var_14]
+.text:00B4A6FB push    offset aNameS                   ; " name=\"%s\""
+.text:00B4A700 push    eax
+.text:00B4A701 call    GatherOsInformation
+.text:00B4A706 mov     edi, eax
+.text:00B4A708 add     esp, 0Ch
+.text:00B4A70B test    edi, edi
+.text:00B4A70D js      loc_B4A7DB
+.text:00B4A713 mov     ecx, [ebx+10h]
+.text:00B4A716 mov     eax, [ebp+var_4]
+.text:00B4A719 cmp     dword ptr [eax+ecx+4], 0
+.text:00B4A71E jz      short loc_B4A726
+.text:00B4A720 mov     eax, [eax+ecx+4]
+.text:00B4A724 jmp     short loc_B4A72B
+.text:00B4A726 ; ---------------------------------------------------------------------------
+.text:00B4A726
+.text:00B4A726 loc_B4A726:                             ; CODE XREF: Serialize+115↑j
+.text:00B4A726 mov     eax, offset aRsaSha256          ; "rsa-sha256"
+.text:00B4A72B
+.text:00B4A72B loc_B4A72B:                             ; CODE XREF: Serialize+11B↑j
+.text:00B4A72B push    eax
+.text:00B4A72C lea     eax, [ebp+var_14]
+.text:00B4A72F push    offset aMethodS                 ; " method=\"%s\""
+.text:00B4A734 push    eax
+.text:00B4A735 call    GatherOsInformation
+.text:00B4A73A mov     edi, eax
+.text:00B4A73C add     esp, 0Ch
+.text:00B4A73F test    edi, edi
+.text:00B4A741 js      loc_B4A7DB
+.text:00B4A747 mov     ecx, [ebx+10h]
+.text:00B4A74A mov     eax, [ebp+var_4]
+.text:00B4A74D cmp     dword ptr [eax+ecx+8], 0
+.text:00B4A752 jz      short loc_B4A76F
+.text:00B4A754 push    dword ptr [eax+ecx+8]
+.text:00B4A758 lea     eax, [ebp+var_14]
+.text:00B4A75B push    offset aKeyS                    ; " key=\"%s\""
+.text:00B4A760 push    eax
+.text:00B4A761 call    GatherOsInformation
+.text:00B4A766 mov     edi, eax
+.text:00B4A768 add     esp, 0Ch
+.text:00B4A76B test    edi, edi
+.text:00B4A76D js      short loc_B4A7DB
+.text:00B4A76F
+.text:00B4A76F loc_B4A76F:                             ; CODE XREF: Serialize+149↑j
+.text:00B4A76F mov     eax, [ebx+10h]
+.text:00B4A772 mov     ecx, [ebp+var_4]
+.text:00B4A775 push    dword ptr [ecx+eax+0Ch]
+.text:00B4A779 lea     eax, [ebp+var_14]
+.text:00B4A77C push    offset aSSignature              ; ">%s</signature>"
+.text:00B4A781 push    eax
+.text:00B4A782 call    GatherOsInformation
+.text:00B4A787 mov     edi, eax
+.text:00B4A789 add     esp, 0Ch
+.text:00B4A78C test    edi, edi
+.text:00B4A78E js      short loc_B4A7DB
+.text:00B4A790 mov     eax, [ebp+var_8]
+.text:00B4A793 add     [ebp+var_4], 10h
+.text:00B4A797 inc     eax
+.text:00B4A798 mov     [ebp+var_8], eax
+.text:00B4A79B cmp     eax, [ebx+0Ch]
+.text:00B4A79E jl      loc_B4A6D8
+.text:00B4A7A4
+.text:00B4A7A4 loc_B4A7A4:                             ; CODE XREF: Serialize+C6↑j
+.text:00B4A7A4 push    offset aSignatures              ; "</signatures>"
+.text:00B4A7A9 lea     ecx, [ebp+var_14]
+.text:00B4A7AC call    Append
+.text:00B4A7B1 mov     edi, eax
+.text:00B4A7B3 test    edi, edi
+.text:00B4A7B5 js      short loc_B4A7DB
+.text:00B4A7B7 push    offset aGenuinepropert          ; "</genuineProperties>"
+.text:00B4A7BC lea     ecx, [ebp+var_14]
+.text:00B4A7BF call    Append
+拼接门票文档过程
+                        
+.text:00B49B8A mov     ebx, offset aGenuineticketX     ; "GenuineTicket.xml"
+.text:00B49B8F
+.text:00B49B8F loc_B49B8F:                             ; CODE XREF: GatherOsInformation(ushort const *,ushort const *,ushort const *)+4E8↑j
+.text:00B49B8F lea     eax, [esp+200h+lpFileName]
+.text:00B49B93 mov     edx, ebx                        ; Src
+.text:00B49B95 push    eax                             ; int
+.text:00B49B96 push    ecx                             ; int
+.text:00B49B97 mov     ecx, [esp+208h+Src]             ; Src
+.text:00B49B9B call    CombinePath
+.text:00B49BA0 mov     esi, eax
+.text:00B49BA2 test    esi, esi
+.text:00B49BA4 js      short loc_B49BC0
+.text:00B49BA6 mov     edx, [esp+200h+pcbValue]
+.text:00B49BAA push    [esp+200h+ppbValue]             ; lpBuffer
+.text:00B49BAE mov     ecx, [esp+204h+lpFileName]      ; lpFileName
+.text:00B49BB2 lea     edx, [edx-1]                    ; nNumberOfBytesToWrite
+.text:00B49BB5 call    SaveBinaryAsFile
+创建数字激活门票
+<?xml version="1.0" encoding="utf-8"?>
+<genuineAuthorization
+    xmlns="http://www.microsoft.com/DRM/SL/GenuineAuthorization/1.0">
+    <version>1.0</version>
+    <genuineProperties origin="sppclient">
+        <properties>SessionId=TwBTAE0AYQBqAG8AcgBWAGUAcgBzAGkAbwBuAD0AMQAwADsATwBTAE0AaQBuAG8AcgBWAGUAcgBzAGkAbwBuAD0AMAA7AE8AUwBQAGwAYQB0AGYAbwByAG0ASQBkAD0AMgA7AFAAUAA9ADAAOwBIAHcAaQBkAD0AYQBRAEEAQQBBAEIATQBBAFAAZwBBAEEAQQBBAEEAQQBBAFEAQQBDAEEAQQBJAEEAQQBRAEEARQBBAEEAQQBBAEIAZwBBAEIAQQBBAEUAQQBhAEwANwA4AEcAWQBJAFoAegBDACsAQwBNAHAAbwBZAGQAaQBzAFkAMQByAEIAYQBGADQAMABPAGoAbAAvAHgAcABBADcAZQBMAGwAeABRAG0AbAB5AGsAWQBOAGIAeABFAE8AOABNAEEAQQBJAEEAQQBRAEUAQQBBAGcAVQBBAEEAdwBFAEEAQgBBAEkAQQBCAGcARQBBAEMAQQBjAEEAQwBRAE0AQQBDAGcARQBBAEQAQQBjAEEAQQBBAEEAQQBBAEEAQQBBADsAUABmAG4APQBkAGMAYQAxAC0AOAA1AGEANwAtADcANQA1ADkANwA0ADkAMQBhADEAOABiADsARABvAHcAbgBsAGUAdgBlAGwARwBlAG4AdQBpAG4AZQBTAHQAYQB0AGUAPQAxADsAAAA=;TimeStampClient=2019-07-25T14:56:25Z</properties>
+        <signatures>
+            <signature name="downlevelGTkey" method="rsa-sha256" key="BgIAAACkAABSU0ExAAgAAAEAAQARq+V11k+dvHMCaLWVCaSbeQNlOdWTLkkl0hdMh5V3YhLU2R4h0Jd+7k7qfZ4aIo4ussduwGgmyDRikj5L2R77GG2ciHk4i8siK8qg7frOU0KT5rEks3qVj38C3dS1wS6D67shBFrxPlOEP8+JlelgP7Gxmwdao7NF4LXZ3+KdbJ//9jkmN8iAOP0N2XzW0/cJp9P1q6hE7eeqc/3Qn3zMr0q1Dx7vstN98oV17hNYCwumOxxS1rH+3n7ap2JKRSelo8Jvi214jZLBL+hOtYaGpxs7zIL3ofpoaYy5g7pc/DaTvyfpJho5634jK7dXVFMpzJZMn9w0F/3rkquk0Amm">nZDtNodj1g7NtmZrZeW/sKuL+lMw4ujn5gg2FOnrwO0Q8esItL/uWSWuDpqsL8l2wyiA92VUVNqqt9wcUegncRWRvN/yiUgN9IgipnOKuKnF7ku2677ZpzO9rn2XSCb8gGR7CXLZhEPSNvsrD231H3OMfhTuKSs9D9+fCMWayzbF3fqdZUNsDSSWWoPGPDochGN2p/2UXcY14hXeuuzIjEMslsT4YobmQEEWa13IYbu1NyJh9fGg9hY9V5dmPI3Iy4VYn13vZPFBcLy0SWSFz7DPBxzARl0VjlDewiQbTmsvC6abIBNYMfoL41a4f8gMNcw/rCgy+cB0KTJIcQiZ4A==</signature>
+        </signatures>
+    </genuineProperties>
+</genuineAuthorization>
+     .
+                        
 
