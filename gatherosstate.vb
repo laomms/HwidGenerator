@@ -90,7 +90,56 @@ long __cdecl CreateSppNamedParams(struct _GUID const & __ptr64,struct IUnknown *
 .text:000C5986 ; 73:     v38.Data1 = 0;
 .text:000C5986 mov     [ebp+GuidStruct.Data1], eax
 .text:000C5989 ; 75:     v9 = (void *)CreateInstance(*(int *)((char *)&dword_AECDC0 + v13), &v37);
- int __fastcall CreateInstance(int int1, _DWORD *_dword1)
+ int __fastcall CreateInstance(int a1, _DWORD *_dword1)
+ switch ( a1 )
+  {
+    case 0:
+      v4 = CHwidDataCollectorBase::CreateInstance<CHwidPnPDataCollector<0,0>>(a1, a2);
+      break;
+    case 1:
+      v4 = CHwidDataCollectorBase::CreateInstance<CHwidPnPDataCollector<1,0>>(a1, a2);
+      break;
+    case 2:
+      v4 = CHwidDataCollectorBase::CreateInstance<CHwidHddDataCollector<0>>(a1, a2);
+      break;
+    case 3:
+      v4 = CHwidDataCollectorBase::CreateInstance<CHwidPnPDataCollector<3,0>>(a1, a2);
+      break;
+    case 4:
+      v4 = CHwidDataCollectorBase::CreateInstance<CHwidPnPDataCollector<4,0>>(a1, a2);
+      break;
+    case 5:
+      v4 = CHwidDataCollectorBase::CreateInstance<CHwidPnPDataCollector<5,0>>(a1, a2);
+      break;
+    case 6:
+      v4 = CHwidDataCollectorBase::CreateInstance<CHwidAudioAdaptorCollector<0>>(a1, a2);
+      break;
+    case 7:
+      v4 = CHwidDataCollectorBase::CreateInstance<CHwidDockDataCollector>(a1, a2);
+      break;
+    case 8:
+      v4 = CHwidDataCollectorBase::CreateInstance<CHwidNetworkDataCollector<0>>(a1, a2);
+      break;
+    case 9:
+      v4 = CHwidDataCollectorBase::CreateInstance<HwidCPUDataCollector>(a1, a2);
+      break;
+    case 10:
+      v4 = CHwidDataCollectorBase::CreateInstance<CHwidMemDataCollector<0>>(a1, a2);
+      break;
+    case 11:
+    case 13:
+      v3 = -2147024883;
+      goto LABEL_22;
+    case 12:
+      v4 = CHwidDataCollectorBase::CreateInstance<CHwidBiosDataCollector<0>>(a1, a2);
+      break;
+    case 14:
+      v4 = CHwidDataCollectorBase::CreateInstance<CHwidMobileBroadbandDataCollector<0>>(a1, a2);
+      break;
+    case 15:
+      v4 = CHwidDataCollectorBase::CreateInstance<CHwidBluetoothDataCollector<0>>(a1, a2);
+      break;
+  }
 
 .text:000C5997 mov     ebx, eax
 .text:000C5999 ; 76:     v39 = v9;
@@ -108,7 +157,8 @@ long __cdecl CreateSppNamedParams(struct _GUID const & __ptr64,struct IUnknown *
 .text:000C59B1 push    [ebp+int3]
 .text:000C59B4 call    Insert
  void *__fastcall Insert(int *int1, int int2, int int3, int *guidstuct_data4)
-
+定义一个空GUID,经过一系列计算构建一个新的GUID,其中用到了
+        
 text:00B859C6 mov     ecx, dword ptr [ebp+var_20.Data4]
 .text:00B859C9 push    edi
 .text:00B859CA push    ecx
