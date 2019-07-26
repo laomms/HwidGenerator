@@ -383,6 +383,16 @@ BASE64加密: XhTW/U4CI/3Q2jQwFJbNacX7fvW+7omKhhOS1leWbAIRsC+1FRTM5SXsNL696v3Gx8
 .text:00B4A487 js      loc_B4A13E
 .text:00B4A48D lea     edx, [ebp+var_1B0]
 .text:00B4A493 mov     ecx, offset aBgiaaackaabsu0     ; BgIAAACkAABSU0ExAAgAAAEAAQARq+V11k+dvHMCaLWVCaSbeQNlOdWTLkkl0hdMh5V3YhLU2R4h0Jd+7k7qfZ4aIo4ussduwGgm
+固定公钥:.text:00029E80 aBgiaaackaabsu0:                        ; DATA XREF: CreateGenuineTicketClient+531↓o
+                 text "UTF-16LE", 'BgIAAACkAABSU0ExAAgAAAEAAQARq+V11k+dvHMCaLWVCaSbeQN'
+                 text "UTF-16LE", 'lOdWTLkkl0hdMh5V3YhLU2R4h0Jd+7k7qfZ4aIo4ussduwGgmyD'
+                 text "UTF-16LE", 'Rikj5L2R77GG2ciHk4i8siK8qg7frOU0KT5rEks3qVj38C3dS1w'
+                 text "UTF-16LE", 'S6D67shBFrxPlOEP8+JlelgP7Gxmwdao7NF4LXZ3+KdbJ//9jkm'
+                 text "UTF-16LE", 'N8iAOP0N2XzW0/cJp9P1q6hE7eeqc/3Qn3zMr0q1Dx7vstN98oV'
+                 text "UTF-16LE", '17hNYCwumOxxS1rH+3n7ap2JKRSelo8Jvi214jZLBL+hOtYaGpx'
+                 text "UTF-16LE", 's7zIL3ofpoaYy5g7pc/DaTvyfpJho5634jK7dXVFMpzJZMn9w0F'
+                 text "UTF-16LE", '/3rkquk0Amm',0
+                        
 .text:00B4A498 call    Create
 .text:00B4A49D mov     ebx, eax
 .text:00B4A49F test    ebx, ebx
