@@ -55,6 +55,7 @@ vb.net 实现:
 .text:00B49842 mov     esi, eax
 .text:00B49844 test    esi, esi
 void *__stdcall HwidGetCurrentEx(unsigned __int8 *a1, unsigned int a2, struct _HWID **a3, unsigned int *a4, int **a5, unsigned int *a6)
+这个函数在系统自带的LicensingWinRT.dll中就有
 ************
 .text:00B8594B push    118h                            ; Size
 .text:00B85950 push    ebx                             ; Val
