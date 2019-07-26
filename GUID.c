@@ -65,4 +65,13 @@ Public Shared ReadOnly GUID_DEVCLASS_MEDIA As New Guid("{0x4d36e96c, 0xe325, 0x1
 Public Shared ReadOnly GUID_DEVCLASS_HDC As New Guid("{0x4d36e96a, 0xe325, 0x11ce, {0xbf, 0xc1, 0x08, 0x00, 0x2b, 0xe1, 0x03, 0x18}}")
 Public Shared ReadOnly GUID_DEVCLASS_DISPLAY As New Guid("{0x4d36e968, 0xe325, 0x11ce, {0xbf, 0xc1, 0x08, 0x00, 0x2b, 0xe1, 0x03, 0x18}}")
 Public Shared ReadOnly GUID_DEVCLASS_CDROM As New Guid("{0x4d36e965, 0xe325, 0x11ce, {0xbf, 0xc1, 0x08, 0x00, 0x2b, 0xe1, 0x03, 0x18}}")
-Public Shared ReadOnly GUID As New Guid("{eb89a21b_1f9c_4093_9a4d_05d4002543f6}")
+
+  
+  Public Shared ReadOnly GUID As New Guid("{eb89a21b_1f9c_4093_9a4d_05d4002543f6}")
+, "{%08X-%04X-%04x-%02X%02X-%02X%02X%02X%02X%02X%02X}"
+, guid.Data1
+, guid.Data2
+, guid.Data3
+, guid.Data4[0], guid.Data4[1]
+, guid.Data4[2], guid.Data4[3], guid.Data4[4], guid.Data4[5]
+, guid.Data4[6], guid.Data4[7]
