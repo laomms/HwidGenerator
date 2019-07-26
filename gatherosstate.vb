@@ -240,6 +240,30 @@ hInf = SLGetWindowsInformationDWORD("Security-SPP-GenuineLocalStatus", LocalStat
 .text:00B4A246 call    Create
 拼接SessionId：SessionId=TwBTAE0AYQBqAG8AcgBWAGUAcgBzAGkAbwBuAD0AMQAwADsATwBTAE0AaQBuAG8AcgBWAGUAcgBzAGkAbwBuAD0AMA          
                         
+.text:0008ACBD push    edi                             ; lpUsedDefaultChar
+.text:0008ACBE push    edi                             ; lpDefaultChar
+.text:0008ACBF push    edi                             ; cbMultiByte
+.text:0008ACC0 push    edi                             ; lpMultiByteStr
+.text:0008ACC1 push    0FFFFFFFFh                      ; cchWideChar
+.text:0008ACC3 push    eax                             ; lpWideCharStr
+.text:0008ACC4 push    edi                             ; dwFlags
+.text:0008ACC5 push    0FDE9h                          ; CodePage
+.text:0008ACCA mov     [ebp+lpWideCharStr], eax
+.text:0008ACCD mov     esi, edi
+.text:0008ACCF call    ds:__imp__WideCharToMultiByte@32 ; WideCharToMultiByte(x,x,x,x,x,x,x,x)
+映射unicode宽字符串SessionId=TwBTAE0AYQBqAG8AcgBWAGUAcgBzAGkAbwBuAD0AMQAwADsATwBTAE0AaQBuAG8AcgBWAGUAcgBzAGkAbwBuAD0AMAA7AE8AUwBQAGwAYQB0AGYAbwByAG0ASQBkAD0AMgA7AFAAUAA9ADAAOwBIAHcAaQBkAD0AYQBRAEEAQQBBAEIATQBBAFAAZwBBAEEAQQBBAEEAQQBBAFEAQQBDAEEAQQ             
+
+.text:0008A36C push    0F0000020h                      ; dwFlags
+.text:0008A371 push    18h                             ; dwProvType
+.text:0008A373 push    offset szProvider               ; "Microsoft Enhanced RSA and AES Cryptogr"...
+.text:0008A378 push    ebx                             ; szContainer
+.text:0008A379 lea     eax, [ebp+phProv]
+.text:0008A37F push    eax                             ; phProv
+.text:0008A380 call    ds:__imp__CryptAcquireContextW@20 ; CryptAcquireContextW(x,x,x,x,x)
+调用ADVAPI32.dll中的CryptAcquireContextW函数
+
+              
+                        
 .text:00B49A98 lea     eax, [esp+200h+lpMem]
 .text:00B49A9C push    eax
 .text:00B49A9D push    ecx
