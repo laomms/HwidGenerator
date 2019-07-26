@@ -66,25 +66,48 @@ void *__stdcall HwidGetCurrentEx(unsigned __int8 *a1, unsigned int a2, struct _H
 .text:00B85959 add     esp, 0Ch
 .text:00B8595C mov     [esi+2], ax
 .text:00B85960 ; 64:   v12 = CreateSppNamedParams(v11, &v38, v30, v31);
-.text:00B85960 lea     eax, [ebp+var_20]
-.text:00B85963 push    eax                             ; struct _GUID *
-.text:00B85964 call    CreateSppNamedParams
+.text:000C5960 lea     eax, [ebp+GuidStruct]
+.text:000C5963 push    eax                             ; struct _GUID *
+.text:000C5964 call    CreateSppNamedParams
 long __cdecl CreateSppNamedParams(struct _GUID const & __ptr64,struct IUnknown * __ptr64,void * __ptr64 * __ptr64)
 
-.text:00B85980 and     dword ptr [ebp+var_20.Data2], 0
-.text:00B85984 ; 72:     v13 = 0;
-.text:00B85984 xor     eax, eax
-.text:00B85986 ; 73:     v38.Data1 = 0;
-.text:00B85986 mov     [ebp+var_20.Data1], eax
-.text:00B85989 ; 75:     v9 = (void *)CreateInstance(*(int *)((char *)&dword_AECDC0 + v13), &v37);
-public: static long __cdecl CHardwareComponentManagerT<0>::CreateInstance(enum _HWIDCLASS,struct ISppHwidCollector * __ptr64 * __ptr64)
+.text:000C5969 ; 65:   v7 = v38.Data1;
+.text:000C5969 mov     edi, [ebp+GuidStruct.Data1]
+.text:000C596C ; 66:   v9 = v12;
+.text:000C596C mov     ebx, eax
+.text:000C596E ; 67:   v39 = v12;
+.text:000C596E mov     [ebp+hCreateInstances], ebx
+.text:000C5971 ; 68:   if ( (signed int)v12 >= 0 )
+.text:000C5971 test    ebx, ebx
+.text:000C5973 js      loc_C5C10
+.text:000C5979 ; 70:     LogHResultEvent(0);
+.text:000C5979 xor     ecx, ecx
+.text:000C597B call    LogHResultEvent
+.text:000C5980 ; 71:     *(_DWORD *)&v38.Data2 = 0;
+.text:000C5980 and     dword ptr [ebp+GuidStruct.Data2], 0
+.text:000C5984 ; 72:     v13 = 0;
+.text:000C5984 xor     eax, eax
+.text:000C5986 ; 73:     v38.Data1 = 0;
+.text:000C5986 mov     [ebp+GuidStruct.Data1], eax
+.text:000C5989 ; 75:     v9 = (void *)CreateInstance(*(int *)((char *)&dword_AECDC0 + v13), &v37);
+ int __fastcall CreateInstance(int int1, _DWORD *_dword1)
 
-.text:00B859AA mov     dword ptr [ebp+var_20.Data4], eax
-.text:00B859AD lea     eax, [ebp+var_24]
-.text:00B859B0 push    eax
-.text:00B859B1 push    [ebp+var_30]
-.text:00B859B4 call    Insert
-public: long __cdecl CArray<struct CSppParam,unsigned short const * __ptr64,class CAdaptorDefault,class CPoliciesDefault>::Insert(int,struct CSppParam const & __ptr64) __ptr64
+.text:000C5997 mov     ebx, eax
+.text:000C5999 ; 76:     v39 = v9;
+.text:000C5999 mov     [ebp+hCreateInstances], ebx
+.text:000C599C ; 77:     if ( (signed int)v9 >= 0 )
+.text:000C599C test    ebx, ebx
+.text:000C599E js      loc_C5C10
+.text:000C59A4 ; 80:       v9 = Insert(&v33, v14, v34, &v37);
+.text:000C59A4 mov     eax, [ebp+GuidStruct_Data4]
+.text:000C59A7 lea     ecx, [ebp+int1]
+.text:000C59AA ; 79:       *(_DWORD *)v38.Data4 = v37;
+.text:000C59AA mov     dword ptr [ebp+GuidStruct.Data4], eax
+.text:000C59AD lea     eax, [ebp+GuidStruct_Data4]
+.text:000C59B0 push    eax
+.text:000C59B1 push    [ebp+int3]
+.text:000C59B4 call    Insert
+ void *__fastcall Insert(int *int1, int int2, int int3, int *guidstuct_data4)
 
 text:00B859C6 mov     ecx, dword ptr [ebp+var_20.Data4]
 .text:00B859C9 push    edi
