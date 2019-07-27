@@ -70,7 +70,7 @@ Dim pDll As IntPtr = LoadLibrary("LicensingWinRT.dll")
             Dim byteHWID(31) As Byte
             Dim hHwid = HwidGetCurrentExFunc(IntPtr.Zero, 0, structHWID, byteHWID, IntPtr.Zero, IntPtr.Zero)
             If hHwid = 0 Then
-            'byteHWID:3E 00 00 00 00 00 00 00 00 00 00 00 00 00 04 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+            'byteHWID:3E 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
             'gatherosstate中应该得到:3E 00 00 00 00 00 01 00 02 00 02 00 01 00 04 00 00 00 06 00 01 00 01 00 68 BE FC 19 82 19 CC 2F
             所以这个函数还是有区别,dll中少很多步骤
             End If
