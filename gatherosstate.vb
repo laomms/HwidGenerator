@@ -55,7 +55,23 @@ vb.net 实现:
 .text:00B49842 mov     esi, eax
 .text:00B49844 test    esi, esi
 void *__stdcall HwidGetCurrentEx(unsigned __int8 *a1, unsigned int a2, struct _HWID **a3, unsigned int *a4, int **a5, unsigned int *a6)
-这个函数在系统自带的LicensingWinRT.dll中就有
+这个函数在系统自带的LicensingWinRT.dll中就有,但是是内部函数,相对于dll基地址的偏移地址为0x28AF0,调用该dll中的这个函数:
+<UnmanagedFunctionPointer(CallingConvention.Cdecl)>
+Private Delegate Function HwidGetCurrentEx(ByVal a1 As IntPtr, ByVal a2 As UInteger, ByVal structHWID As Byte(), HWID As Byte(), a5 As IntPtr, a6 As IntPtr) As Integer
+Dim pDll As IntPtr = LoadLibrary("LicensingWinRT.dll")
+        If pDll <> IntPtr.Zero Then
+            Dim hMod = GetModuleHandle("LicensingWinRT")
+            If hMod = IntPtr.Zero Then
+                Console.WriteLine(Marshal.GetLastWin32Error())
+            End If
+            Dim pAddressHwidGetCurrentEx = hMod + &H28AF0
+            Dim HwidGetCurrentExFunc As HwidGetCurrentEx = CType(Marshal.GetDelegateForFunctionPointer(pAddressHwidGetCurrentEx, GetType(HwidGetCurrentEx)), HwidGetCurrentEx)
+            Dim structHWID(256) As Byte
+            Dim HWID(256) As Byte
+            Dim hHwid = HwidGetCurrentExFunc(IntPtr.Zero, 0, structHWID, HWID, IntPtr.Zero, IntPtr.Zero)
+            Dim hFree As Boolean = FreeLibrary(pDll)
+        End If
+
 ************
 .text:00B8594B push    118h                            ; Size
 .text:00B85950 push    ebx                             ; Val
