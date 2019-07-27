@@ -1,4 +1,4 @@
-# gatherosstate
+# gatherosstate 1803（17163）
 
 gather os state 收集系统硬件信息创建数字激活文件
 
