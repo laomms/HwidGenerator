@@ -57,7 +57,7 @@ vb.net 实现:
 void *__stdcall HwidGetCurrentEx(unsigned __int8 *a1, unsigned int a2, struct _HWID **a3, unsigned int *a4, int **a5, unsigned int *a6)
 这个函数在系统自带的LicensingWinRT.dll中就有,但是是内部函数,如何调用:通过IDA查询到相对于dll基地址的偏移地址为0x28AF0,调用该dll中的这个函数:
 <UnmanagedFunctionPointer(CallingConvention.Cdecl)>
-Private Delegate Function HwidGetCurrentEx(ByVal a1 As IntPtr, ByVal a2 As UInteger, ByVal structHWID As Byte(), HWID As Byte(), a5 As IntPtr, a6 As IntPtr) As Integer
+Private Delegate Function HwidGetCurrentEx(ByVal a1 As IntPtr, ByVal a2 As UInteger, ByVal structHWID As Byte(), byteHWID As Byte(), a5 As IntPtr, a6 As IntPtr) As Integer
 Dim pDll As IntPtr = LoadLibrary("LicensingWinRT.dll")
         If pDll <> IntPtr.Zero Then
             Dim hMod = GetModuleHandle("LicensingWinRT")
@@ -66,11 +66,13 @@ Dim pDll As IntPtr = LoadLibrary("LicensingWinRT.dll")
             End If
             Dim pAddressHwidGetCurrentEx = hMod + &H28AF0
             Dim HwidGetCurrentExFunc As HwidGetCurrentEx = CType(Marshal.GetDelegateForFunctionPointer(pAddressHwidGetCurrentEx, GetType(HwidGetCurrentEx)), HwidGetCurrentEx)
-            Dim structHWID(256) As Byte
-            Dim HWID(256) As Byte
-            Dim hHwid = HwidGetCurrentExFunc(IntPtr.Zero, 0, structHWID, HWID, IntPtr.Zero, IntPtr.Zero)
+            Dim structHWID(7) As Byte
+            Dim byteHWID(31) As Byte
+            Dim hHwid = HwidGetCurrentExFunc(IntPtr.Zero, 0, structHWID, byteHWID, IntPtr.Zero, IntPtr.Zero)
             If hHwid = 0 Then
-            .....
+            'byteHWID:3E 00 00 00 00 00 00 00 00 00 00 00 00 00 04 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+            'gatherosstate中应该得到:3E 00 00 00 00 00 01 00 02 00 02 00 01 00 04 00 00 00 06 00 01 00 01 00 68 BE FC 19 82 19 CC 2F
+            所以这个函数还是有区别,dll中少很多步骤
             End If
             Dim hFree As Boolean = FreeLibrary(pDll)
         End If
