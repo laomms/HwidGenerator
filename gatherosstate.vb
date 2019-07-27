@@ -69,10 +69,13 @@ Dim pDll As IntPtr = LoadLibrary("LicensingWinRT.dll")
             Dim structHWID(256) As Byte
             Dim HWID(256) As Byte
             Dim hHwid = HwidGetCurrentExFunc(IntPtr.Zero, 0, structHWID, HWID, IntPtr.Zero, IntPtr.Zero)
+            If hHwid = 0 Then
+            .....
+            End If
             Dim hFree As Boolean = FreeLibrary(pDll)
         End If
 
-************
+************看下大致算法
 .text:00B8594B push    118h                            ; Size
 .text:00B85950 push    ebx                             ; Val
 .text:00B85951 push    esi                             ; Dst
