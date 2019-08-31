@@ -678,7 +678,7 @@ BASE64加密: XhTW/U4CI/3Q2jQwFJbNacX7fvW+7omKhhOS1leWbAIRsC+1FRTM5SXsNL696v3Gx8
 .text:00B49BB5 call    SaveBinaryAsFile
 `
 创建数字激活门票
-```php
+```html
 <?xml version="1.0" encoding="utf-8"?>
 <genuineAuthorization
     xmlns="http://www.microsoft.com/DRM/SL/GenuineAuthorization/1.0">
