@@ -24,7 +24,7 @@ text:00B497D8 push    offset aOsmajorversion          ; 'OSMajorVersion=%d;OSMin
 .text:00B49804 push    offset aPpD                     ; "PP=%d;"
 .text:00B49809 push    eax
 .text:00B4980A call    GatherOsInformation
-`
+```
 
 vb.net 实现:
 ```vb
@@ -54,7 +54,7 @@ vb.net 实现:
         End If
         Return New Version(osVersionInfo.dwMajorVersion, osVersionInfo.dwMinorVersion, osVersionInfo.bProductType)
     End Function
- `
+```
 拼接后字符串:OSMajorVersion=10;OSMinorVersion=0;OSPlatformId=2;PP=0;
 
 ```c
@@ -89,7 +89,7 @@ Dim pDll As IntPtr = LoadLibrary("LicensingWinRT.dll")
             End If
             Dim hFree As Boolean = FreeLibrary(pDll)
         End If
-`
+```
 ************看下大致算法
 
 ```c
@@ -676,9 +676,9 @@ BASE64加密: XhTW/U4CI/3Q2jQwFJbNacX7fvW+7omKhhOS1leWbAIRsC+1FRTM5SXsNL696v3Gx8
 .text:00B49BAE mov     ecx, [esp+204h+lpFileName]      ; lpFileName
 .text:00B49BB2 lea     edx, [edx-1]                    ; nNumberOfBytesToWrite
 .text:00B49BB5 call    SaveBinaryAsFile
-`
+```
 创建数字激活门票
-
+```php
 <?xml version="1.0" encoding="utf-8"?>
 <genuineAuthorization
     xmlns="http://www.microsoft.com/DRM/SL/GenuineAuthorization/1.0">
@@ -690,4 +690,4 @@ BASE64加密: XhTW/U4CI/3Q2jQwFJbNacX7fvW+7omKhhOS1leWbAIRsC+1FRTM5SXsNL696v3Gx8
         </signatures>
     </genuineProperties>
 </genuineAuthorization>
-
+```
