@@ -23,8 +23,7 @@
         'End If
 
 
-{  
-   "SKU":[  
+
       {  
          "analogonecore":"87",
          "holographic":"88",
@@ -182,5 +181,4 @@
          "serverwinsbv":"23",
          "serverhi":"7C"
       }
-   ]
-}
+
