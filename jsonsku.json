@@ -1,4 +1,4 @@
-        '转换SKU到版本名称:
+        '获取系统内核版本名称
         '方法1：
         'Dim datatype As SLDATATYPE
         'Dim cbvalue As UInteger
@@ -7,7 +7,7 @@
         '    osname = Marshal.PtrToStringUni(ValuePtr)
         'End If
 
-        '方法2：
+        '方法2：转换SKU到版本名称:
         'Dim ValuePtr As Integer
         'Dim HexSku As String = ""
         'Dim szRes As Integer = SLGetWindowsInformationDWORD("Kernel-ProductInfo", ValuePtr)
