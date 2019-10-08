@@ -1,4 +1,4 @@
-//touse：
+        '根据PFN提取密钥
         'Dim peDataType As SLDATATYPE
         'Dim pcbValue As UInteger
         'Dim ppbValue As IntPtr
