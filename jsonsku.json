@@ -1,3 +1,20 @@
+        '转换SKU到版本名称:
+
+        'Dim ValuePtr As Integer
+        'Dim HexSku As String = ""
+        'Dim szRes As Integer = SLGetWindowsInformationDWORD("Kernel-ProductInfo", ValuePtr)
+        'If szRes = 0 Then
+        '    HexSku = ValuePtr.ToString("X2")
+        '    sku = Convert.ToInt32(HexSku, 16)
+        '    Try
+        '        Dim token As JToken =  JObject.Parse(jsonsku)
+        '        osname = tokens.Where(Function([each]) [each] = HexSku).ToList(0).ToString.Split(":")(0).Replace("""", "").Trim       
+        '    Catch ex As Exception
+
+        '    End Try
+        'End If
+
+
 {  
    "SKU":[  
       {  
