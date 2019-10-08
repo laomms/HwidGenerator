@@ -1,3 +1,18 @@
+//touse：
+        'Dim peDataType As SLDATATYPE
+        'Dim pcbValue As UInteger
+        'Dim ppbValue As IntPtr
+        'szRes = SLGetWindowsInformation("Kernel-OsProduct-PFN", peDataType, pcbValue, ppbValue)
+        'If szRes = 0 Then
+        '    Pfn = Marshal.PtrToStringUni(ppbValue)        
+        '            Try
+        '                Dim token As JToken = JObject.Parse(jsonstring)
+        '                keys = token(Pfn)(1)                       
+        '            Catch ex As Exception        '                
+        '            End Try
+        '    End If
+
+
 { 
    "Microsoft.Windows.100.res-v3273_8wekyb3d8bbwe":[ 
       "84d03470-29bc-75b1-add9-0cae3bc17ba6",
