@@ -7,7 +7,8 @@
         '    osname = Marshal.PtrToStringUni(ValuePtr)
         'End If
 
-        '方法2：获取系统SKU版本及转换SKU到版本名称:
+        '方法2：获取系统SKU版本
+         '转换SKU到版本名称:
         'Dim ValuePtr As Integer
         'Dim HexSku As String = ""
         'Dim szRes As Integer = SLGetWindowsInformationDWORD("Kernel-ProductInfo", ValuePtr)
