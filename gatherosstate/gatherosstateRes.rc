@@ -1,0 +1,37 @@
+#include "CpuIDRes.h"
+
+1								24		DISCARDABLE	"Release\\Manifest.xml"
+IDI_APP_ICON                  ICON		DISCARDABLE	"Res\\CpuID.ico"
+
+
+
+
+IDR_VERSION VERSIONINFO
+FILEVERSION 1,0,0,1
+PRODUCTVERSION 1,0,0,1
+FILEFLAGSMASK 0x2L
+FILEFLAGS 0x0L
+FILEOS 0x4L
+FILETYPE 0x1L
+FILESUBTYPE 0x0L
+BEGIN
+	BLOCK "StringFileInfo"
+	BEGIN
+		BLOCK "040904E4"
+		BEGIN
+			VALUE "Comments", "Programmed in assembly with Easy Code\0"
+			VALUE "CompanyName", "HAM Design\0"
+			VALUE "FileDescription", "Easy Code visual project\0"
+			VALUE "FileVersion", "1.00.0.0001\0"
+			VALUE "InternalName", "gatherosstate\0"
+			VALUE "LegalCopyright", "Copyright ? 2008-2011 H¨¦ctor A. Medina\0"
+			VALUE "OriginalFilename", "gatherosstate.exe\0"
+			VALUE "ProductName", "gatherosstate\0"
+			VALUE "ProductVersion", "1.00.0.0001\0"
+		END
+	END
+	BLOCK "VarFileInfo"
+	BEGIN
+		VALUE "Translation", 0x0409, 1252
+	END
+END
