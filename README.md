@@ -1,7 +1,7 @@
 # gatherosstate 1803（17134）
 
 gather os state 收集系统硬件信息创建数字激活文件
-
+程序用了Control Flow Guard(CFG)执行流保护技术
 
 ```c
 text:00B497D8 push    offset aOsmajorversion          ; 'OSMajorVersion=%d;OSMinorVersion=%d;OSPlatformId=%d'
