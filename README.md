@@ -3,7 +3,9 @@
 gather os state 收集系统硬件信息创建数字激活文件
 
 命令行运行: GatherOsState.exe /p <Partner name>  <output directory>
+           
            GatherOsState.exe /c
+           
 或直接运行.
     
 程序用了Control Flow Guard(CFG)执行流保护技术
