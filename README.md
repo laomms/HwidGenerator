@@ -682,6 +682,23 @@ BASE64加密: XhTW/U4CI/3Q2jQwFJbNacX7fvW+7omKhhOS1leWbAIRsC+1FRTM5SXsNL696v3Gx8
 .text:00B49BB2 lea     edx, [edx-1]                    ; nNumberOfBytesToWrite
 .text:00B49BB5 call    SaveBinaryAsFile
 ```
+总结下流程：
+```php
+# GetVersionExW 获取系统版本信息 转成格式 OSMajorVersion=%d;OSMinorVersion=%d;OSPlatformId=%d
+# HwidGetCurrentEx 获取系统硬件信息 
+# HwidCreateBlock 转成数组 
+# Base64Encode 将数组BASE64加密,取加密的结果40位连接成Hwid=%s格式,与刚才取到的系统信息拼接成拼接字符串:OSMajorVersion=%d;OSMinorVersion=%d;OSPlatformId=%d;PP=%d;Hwid=%s
+# GetActiveWindowsSkuStatus 获取系统激活状态,这里可以patch掉让其返回0即可
+# CompareSkuChannel 判断默认SKU是Retail还是GVLK
+# SkuGetUpgradeProductKeyEx 获取默认PFN,组成Pfn=%s格式,并根据该PFN查表得到默认的密钥及ID(DPID3)值
+# SLGetServiceInformation 是否为BiosProductKey
+# SLGetWindowsInformationDWORD 判断当前系统的激活状态,可patch.如果是激活状态,标志位格式 "DownlevelGenuineState=1;")
+# Base64Encode 取字符串:OSMajorVersion=%d;OSMinorVersion=%d;OSPlatformId=%d;PP=%d;Hwid=%s的前38位用base64加密,将得到的加密结果连接字符串拼成格式:SL_GET_GENUINE_AUTHZ:%s
+# SLGetGenuineInformation 根据SL_GET_GENUINE_AUTHZ:%s获取数据
+# CreateGenuineTicketClient 如果不是有效数据执行创建数字文件操作
+
+```
+
 创建数字激活门票
 ```php
 <?xml version="1.0" encoding="utf-8"?>
