@@ -6,8 +6,9 @@ gather os state 收集系统硬件信息创建数字激活文件
 ```c
 GatherOsState.exe /p <Partner name>  <output directory>
 ```
+或
 ```c
- GatherOsState.exe /c
+GatherOsState.exe /c
 ```    
 或直接运行.
     
