@@ -1,5 +1,6 @@
 use: Dim Keys as string = tokens.SelectToken("$.['Office 2019'].['Professional Plus C2R-P']").Select(Function(s) CStr(s)).ToList()(0)
-
+or
+keys = tokens.Children.Children.Children.Children(Of JObject)().FirstOrDefault(Function(x) x.Children(Of JProperty)().Any(Function(y) y.Name = skuid)).GetValue(skuid)
 {  
    "Windows 10":{  
       "Home":{  
