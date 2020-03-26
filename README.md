@@ -1,6 +1,6 @@
 # gatherosstate 1803（17134）
 
-gather os state 收集系统硬件信息创建数字激活文件
+Gather Downlevel OS Activation State
 
 命令行运行: 
 ```c
