@@ -74,9 +74,8 @@ vb.net 实现:
 .text:00B4983D call    HwidGetCurrentEx                ;F7跟入
 .text:00B49842 mov     esi, eax
 .text:00B49844 test    esi, esi
-64位:HwidGetCurrentEx(unsigned __int8 *key, int pid2, struct _HWID **struct_HWID, unsigned int *byte, int **a5, unsigned int *a6)
-32位:HwidGetCurrentEx(unsigned __int8 *, unsigned int, struct _HWID **, unsigned int *, int **, unsigned int *)
-void *__stdcall HwidGetCurrentEx(unsigned __int8 *a1, unsigned int a2, struct _HWID **a3, unsigned int *a4, int **a5, unsigned int *a6)
+void *__stdcall HwidGetCurrentEx(unsigned __int8 *key, int pid2, struct _HWID **struct_HWID, unsigned int *byte, int **a5, unsigned int *a6)
+
 这个函数在系统自带的LicensingWinRT.dll中就有,但是是内部函数,如何调用:通过IDA查询到相对于dll基地址的偏移地址为0x28AF0,调用该dll中的这个函数:
 <UnmanagedFunctionPointer(CallingConvention.Cdecl)>
 Private Delegate Function HwidGetCurrentEx(ByVal a1 As IntPtr, ByVal a2 As UInteger, ByVal structHWID As Byte(), byteHWID As Byte(), a5 As IntPtr, a6 As IntPtr) As Integer
