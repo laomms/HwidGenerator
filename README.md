@@ -123,6 +123,12 @@ vb.net 实现:
 void *__stdcall HwidGetCurrentEx(unsigned __int8 *key, int pid2, struct _HWID **struct_HWID, unsigned int *byte, int **a5, unsigned int *a6)
 
 这个函数在系统自带的LicensingWinRT.dll中就有,但是是内部函数,调用方法我已经写在另一篇文章里.
+比如我这里获取的总共64位的硬件数组是:
+3E 00 00 00 00 00 01 00 02 00 02 00 01 00 04 00
+00 00 06 00 01 00 01 00 68 BE FC 19 82 19 CC 2F
+82 32 9A 18 76 2B 18 D6 B0 5A 17 8D 0E 8E 5F F1
+A4 0E DE 2E 5C 50 9A 5C A4 60 D6 F1 10 EF 00 00
+
 ```
 ************看下大致算法
 
