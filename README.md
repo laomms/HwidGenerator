@@ -300,7 +300,7 @@ text:00B859C6 mov     ecx, dword ptr [ebp+var_20.Data4]
 偏移3位插入高位13变成:69 00 00 00 13 00
 再连接获取到的HwidGetCurrentEx数组,结尾加0C.
 取之前创建的数组的30位连接到后面.
-只要取这个全部组合后的数组的前32位来base64加密就可以.
+取这个全部组合后的数组的前75位来base64加密.
 
 .text:00B4986B js      loc_B49BC0
 .text:00B49871 mov     edx, [esp+200h+var_1B0]
