@@ -727,8 +727,8 @@ BASE64加密: XhTW/U4CI/3Q2jQwFJbNacX7fvW+7omKhhOS1leWbAIRsC+1FRTM5SXsNL696v3Gx8
 总结下流程：
 ```php
 # GetVersionExW 获取系统版本信息 转成格式 OSMajorVersion=%d;OSMinorVersion=%d;OSPlatformId=%d
-# HwidGetCurrentEx 获取系统硬件信息 
-# HwidCreateBlock 转成数组 
+# HwidGetCurrentEx 获取系统硬件信息数组  
+# HwidCreateBlock 通过算法和合并转成新的数组,取前32位来加密   
 # Base64Encode 将数组BASE64加密,取加密的结果40位连接成Hwid=%s格式,与刚才取到的系统信息拼接成拼接字符串:OSMajorVersion=%d;OSMinorVersion=%d;OSPlatformId=%d;PP=%d;Hwid=%s
 # GetActiveWindowsSkuStatus 获取系统激活状态,这里可以patch掉让其返回0即可
 # CompareSkuChannel 判断默认SKU是Retail还是GVLK
