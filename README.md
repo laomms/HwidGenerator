@@ -242,6 +242,12 @@ text:00B859C6 mov     ecx, dword ptr [ebp+var_20.Data4]
 .text:00B49862 call    HwidCreateBlock
 <_HWID_BLOCK::CreateInstance(ushort,_HWID_TIMEWEIGHT * const,ulong,_HWID *,_HWID_BLOCK * *,ulong *)>
 得到转换后数数组 69 00 00 00 13 00 3E 00 00 00 00 00 01 00 02 00 02 00 01 00 04 00 00 00 06 00 01 00 01 00 68 BE
+算法过程是：
+取获取到的硬件数组,就是HwidGetCurrentEx返回的数组.
+将数组首字节加6,在加25,等于69
+偏移3位插入高位13变成:69 00 00 00 13 00
+再连接获取到的HwidGetCurrentEx数组,结尾加0C.
+只要取这个数组的前32位来base64加密就可以.
 
 .text:00B4986B js      loc_B49BC0
 .text:00B49871 mov     edx, [esp+200h+var_1B0]
