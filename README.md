@@ -300,7 +300,7 @@ text:00B859C6 mov     ecx, dword ptr [ebp+var_20.Data4]
 偏移3位插入高位13变成:69 00 00 00 13 00
 再连接获取到的HwidGetCurrentEx数组,结尾加0C.
 取之前创建的数组的30位连接到后面.
-取这个全部组合后的数组的前75位来base64加密.
+取这个全部组合后的数组的base64加密.
 
 .text:00B4986B js      loc_B49BC0
 .text:00B49871 mov     edx, [esp+200h+var_1B0]
@@ -377,7 +377,7 @@ text:00B49896 push    offset aHwidS                   ; "Hwid=%s;"
 .text:00B49A01 mov     ecx, [esp+208h+var_1D4]
 .text:00B49A05 lea     edx, ds:2[eax*2]
 .text:00B49A0C call    Base64Encod
-取刚才拼接字符串的前38位base64加密:OSMajorVersion=10;OSMinorVersion=0;OSP
+取刚才拼接数组base64加密
 得到base64字符串:TwBTAE0AYQBqAG8AcgBWAGUAcgBzAGkAbwBuAD0AMQAwADsATwBTAE0AaQBuAG8AcgBWAGUAcgBzAGkAbwBuAD0AMAA7AE8AUwBQ
 
 .text:00B49A1F lea     eax, [esp+204h+pwszValueName]
@@ -407,7 +407,7 @@ hInf = SLGetWindowsInformationDWORD("Security-SPP-GenuineLocalStatus", LocalStat
 .text:0008ACCA mov     [ebp+lpWideCharStr], eax
 .text:0008ACCD mov     esi, edi
 .text:0008ACCF call    ds:__imp__WideCharToMultiByte@32 ; WideCharToMultiByte(x,x,x,x,x,x,x,x)
-映射unicode宽字符串SessionId=TwBTAE0AYQBqAG8AcgBWAGUAcgBzAGkAbwBuAD0AMQAwADsATwBTAE0AaQBuAG8AcgBWAGUAcgBzAGkAbwBuAD0AMAA7AE8AUwBQAGwAYQB0AGYAbwByAG0ASQBkAD0AMgA7AFAAUAA9ADAAOwBIAHcAaQBkAD0AYQBRAEEAQQBBAEIATQBBAFAAZwBBAEEAQQBBAEEAQQBBAFEAQQBDAEEAQQ             
+将unicode宽字符串转成单字节字符串SessionId=TwBTAE0AYQBqAG8AcgBWAGUAcgBzAGkAbwBuAD0AMQAwADsATwBTAE0AaQBuAG8AcgBWAGUAcgBzAGkAbwBuAD0AMAA7AE8AUwBQAGwAYQB0AGYAbwByAG0ASQBkAD0AMgA7AFAAUAA9ADAAOwBIAHcAaQBkAD0AYQBRAEEAQQBBAEIATQBBAFAAZwBBAEEAQQBBAEEAQQBBAFEAQQBDAEEAQQ             
 
 .text:0008A36C push    0F0000020h                      ; dwFlags
 .text:0008A371 push    18h                             ; dwProvType
@@ -728,20 +728,20 @@ BASE64加密: XhTW/U4CI/3Q2jQwFJbNacX7fvW+7omKhhOS1leWbAIRsC+1FRTM5SXsNL696v3Gx8
 ```php
 # GetVersionExW 获取系统版本信息 转成格式 OSMajorVersion=%d;OSMinorVersion=%d;OSPlatformId=%d
 # HwidGetCurrentEx 获取系统硬件信息数组  
-# HwidCreateBlock 通过算法和合并转成新的数组,取前32位来加密   
-# Base64Encode 将数组BASE64加密,取加密的结果40位连接成Hwid=%s格式,与刚才取到的系统信息拼接成拼接字符串:OSMajorVersion=%d;OSMinorVersion=%d;OSPlatformId=%d;PP=%d;Hwid=%s
+# HwidCreateBlock 通过算法和合并转成新的数组
+# Base64Encode 将数组BASE64加密,取加密的结果连接成Hwid=%s格式,与刚才取到的系统信息拼接成拼接字符串:OSMajorVersion=%d;OSMinorVersion=%d;OSPlatformId=%d;PP=%d;Hwid=%s
 # GetActiveWindowsSkuStatus 获取系统激活状态,这里可以patch掉让其返回0即可
 # CompareSkuChannel 判断默认SKU是Retail还是GVLK
 # SkuGetUpgradeProductKeyEx 获取默认PFN(package family name),组成Pfn=%s格式,并根据该PFN查表得到默认的密钥及ID(DPID3)值
 # SLGetServiceInformation 是否为BiosProductKey
-# SLGetWindowsInformationDWORD 判断当前系统的激活状态,可patch.如果是激活状态,标志位格式 "DownlevelGenuineState=1;")
-# Base64Encode 取字符串:OSMajorVersion=%d;OSMinorVersion=%d;OSPlatformId=%d;PP=%d;Hwid=%s的前38位转成unicode后用base64加密,将得到的加密结果连接字符串拼成格式:SL_GET_GENUINE_AUTHZ:%s
+# SLGetWindowsInformationDWORD 判断当前系统的激活状态.字符串后面加"DownlevelGenuineState=1;")
+# Base64Encode 将组合后的字符串用base64加密,将得到的加密结果连接字符串拼成格式:SL_GET_GENUINE_AUTHZ:%s
 # SLGetGenuineInformation 根据SL_GET_GENUINE_AUTHZ:%s获取数据
 # CreateGenuineTicketClient 如果不是有效数据执行创建数字文件操作
 -GetSystemTime(&SystemTime)获取系统时间
 -UtcTimeToIso8601组成TimeStampClient=系统时间格式
 -拼接sessionid,sessionid=上面得到的即SL_GET_GENUINE_AUTHZ字符串中的的base64值
--WideCharToMultiByteWrap 将sessionid=%s转成UNICOEDE宽字符串
+-WideCharToMultiByte 将sessionid=%s转成单字节字符串
 -CryptAcquireContextW 获取有"Microsoft Enhanced RSA and AES Cryptographic Provider"模块的指针
 -VRSAVaultSignPKCS 转成RSA签名数组
 -Base64Encode 加密签名数据成base64字符串
