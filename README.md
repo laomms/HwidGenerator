@@ -735,7 +735,7 @@ BASE64加密: XhTW/U4CI/3Q2jQwFJbNacX7fvW+7omKhhOS1leWbAIRsC+1FRTM5SXsNL696v3Gx8
 # SkuGetUpgradeProductKeyEx 获取默认PFN(package family name),组成Pfn=%s格式,并根据该PFN查表得到默认的密钥及ID(DPID3)值
 # SLGetServiceInformation 是否为BiosProductKey
 # SLGetWindowsInformationDWORD 判断当前系统的激活状态,可patch.如果是激活状态,标志位格式 "DownlevelGenuineState=1;")
-# Base64Encode 取字符串:OSMajorVersion=%d;OSMinorVersion=%d;OSPlatformId=%d;PP=%d;Hwid=%s的前38位用base64加密,将得到的加密结果连接字符串拼成格式:SL_GET_GENUINE_AUTHZ:%s
+# Base64Encode 取字符串:OSMajorVersion=%d;OSMinorVersion=%d;OSPlatformId=%d;PP=%d;Hwid=%s的前38位转成unicode后用base64加密,将得到的加密结果连接字符串拼成格式:SL_GET_GENUINE_AUTHZ:%s
 # SLGetGenuineInformation 根据SL_GET_GENUINE_AUTHZ:%s获取数据
 # CreateGenuineTicketClient 如果不是有效数据执行创建数字文件操作
 -GetSystemTime(&SystemTime)获取系统时间
