@@ -1,3 +1,5 @@
+根据gatherosstate原理用.net写的数字权利工具
+
 ![image](https://github.com/laomms/gatherosstate/blob/master/test.png)   
 
 # 逆向分析:  
