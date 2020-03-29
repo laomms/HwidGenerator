@@ -78,36 +78,6 @@ text:00B497D8 push    offset aOsmajorversion          ; 'OSMajorVersion=%d;OSMin
 .text:00B49809 push    eax
 .text:00B4980A call    GatherOsInformation
 ```
-
-vb.net 实现:
-```vb
-    <StructLayout(LayoutKind.Sequential)>
-    Public Class RtlOsVersionInfoExW
-        Public dwOSVersionInfoSize As UInt32
-        Public dwMajorVersion As UInt32
-        Public dwMinorVersion As UInt32
-        Public dwBuildNumber As UInt32
-        Public dwPlataformId As UInt32
-        <MarshalAs(UnmanagedType.ByValTStr, SizeConst:=128)> Public szCSDVersion As String
-        Public wServicePackMajor As UInt16
-        Public wServicePackMinor As UInt16
-        Public wSuiteMask As UInt16
-        Public bProductType As Byte
-        Public bReserved As Byte
-    End Class
-     <DllImport("Ntdll.dll", CharSet:=CharSet.Unicode, ExactSpelling:=True)>
-    Friend Function RtlGetVersion(<[In](), Out()> ByVal osversion As RtlOsVersionInfoExW) As Integer
-    End Function
-    Public Function NativeOsVersion() As Version      
-        Dim osVersionInfo As New RtlOsVersionInfoExW()
-        osVersionInfo.dwOSVersionInfoSize = Marshal.SizeOf(GetType(RtlOsVersionInfoExW))
-        Dim status As Integer = RtlGetVersion(osVersionInfo)
-        If status <> 0 Then
-            Return Environment.OSVersion.Version
-        End If
-        Return New Version(osVersionInfo.dwMajorVersion, osVersionInfo.dwMinorVersion, osVersionInfo.bProductType)
-    End Function
-```
 拼接后字符串:OSMajorVersion=10;OSMinorVersion=0;OSPlatformId=2;PP=0;
 
 ```c
