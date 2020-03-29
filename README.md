@@ -725,7 +725,7 @@ BASE64加密: XhTW/U4CI/3Q2jQwFJbNacX7fvW+7omKhhOS1leWbAIRsC+1FRTM5SXsNL696v3Gx8
 -将sppclient与<genuineproperties origin="%s">拼接成<genuineProperties origin="sppclient">
 -把剩下的XML标签补全,<properties>%s</properties> <signatures>%s</signatures> <signature name="downlevelGTkey" method="rsa-sha256" key="%s" </signature>...
 -CombinePath SaveBinaryAsFile 创建数字证书,供clipc安装数字token
-***所有字符串都是unicode形式
+
 ```
 
 创建数字激活门票
