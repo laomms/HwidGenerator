@@ -1,5 +1,7 @@
 ![image](https://github.com/laomms/gatherosstate/blob/master/test.png)   
 
+# 逆向分析:  
+
 # gatherosstate 1803（17134）
 
 Gather Downlevel OS Activation State
