@@ -1,0 +1,173 @@
+.586
+.mmx
+.xmm
+.model flat,stdcall
+option casemap:none
+_EC_2_ Equ 1
+DEBUG Equ 1
+__NO_NOISE__ Equ 1
+CHARSIZE Equ 1
+MASM_COMPILER Equ 1
+APP_WIN32 Equ 1
+include ECExterns.inc
+IFNDEF NTDDI_VERSION
+	NTDDI_VERSION equ 003000000H
+ENDIF
+include ECResFile.inc
+include ECMasm32.asm
+
+IFNDEF xword
+	IFDEF APP_WIN64
+		xword typedef qword
+	ELSE
+		xword typedef dword
+	ENDIF
+ENDIF
+
+externdef ECLibbUnicode:xword
+externdef App:ECApplication
+externdef Error:ECErrorStruct
+
+ECErrorHandle proto :qword,:qword,:qword,:qword
+externdef ECLibErrorHandle :proto :xword,:xword,:xword,:xword
+
+starterrorhandler	equ	<StartErrorHandler>
+STARTERRORHANDLER	equ	<StartErrorHandler>
+
+enderrorhandler	equ	<EndErrorHandler>
+ENDERRORHANDLER	equ	<EndErrorHandler>
+
+StartErrorHandler macro lpECErrorHandler
+	assume fs:nothing
+	mov eax,lpECErrorHandler
+	mov Error.regEip,eax
+	mov Error.regEbp,ebp
+	push offset ECLibErrorHandle
+	push dword ptr fs:[0]
+	mov Error.regEsp,esp
+	mov fs:[0],esp
+endm
+
+EndErrorHandler macro
+	pop dword ptr fs:[0]
+	add esp,4
+endm
+
+ECLibGetWindowLong proto :xword
+ECInitProc proto :xword,:xword,:xword,:xword
+ECLibCreateWindow proto :xword,:xword,:xword,:xword
+ECLibErrorHandle proto :xword,:xword,:xword,:xword
+ECLibFinalHandler proto :xword
+ECLibGetWindowPointer proto
+ECLibInitLibrary proto :xword,:xword,:xword,:xword,:xword,:xword,:xword,:xword
+ECLibEndLibrary proto
+ProcessMessages proto :xword,:xword,:xword,:xword
+OnIdle proto :xword
+ECLibGetMessage proto :xword,:xword,:xword,:xword
+ECLibDispatchMessage proto :xword
+ECLibTranslateAccelerator proto :xword, :xword, :xword
+ECLibLoadAccelerators proto :xword, :xword
+ECLibGetOldExceptionFilter proto
+VRSAVaultSignPKCS_Procedure proto :xword,:xword,:xword,:xword
+
+
+.data
+
+align 4
+
+IDR_EC_VRSAVaultSignPKCS__FONT	dw	'T','a','h','o','m','a',0
+IDR_EC_VRSAVaultSignPKCS__NAME	dw	'V','R','S','A','V','a','u','l','t','S','i','g','n','P','K','C','S','_',0
+IDR_EC_VRSAVaultSignPKCS__TEXT	dw	'V','R','S','A','V','a','u','l','t','S','i','g','n','P','K','C','S','_',0
+IDR_EC_VRSAVaultSignPKCS__Button1_FONT	dw	'T','a','h','o','m','a',0
+IDR_EC_VRSAVaultSignPKCS__Button1_NAME	dw	'B','u','t','t','o','n','1',0
+IDR_EC_VRSAVaultSignPKCS__Button1_TEXT	dw	'B','u','t','t','o','n','1',0
+IDR_EC_VRSAVaultSignPKCS__Button1_TOOLTIPTEXT	dw	0
+
+IDR_EC_VRSAVaultSignPKCS__DATA	dd	0,0,08000000Fh,0,0,0,3,0,0
+		dd	0,0,1,1,0,0,0,0,offset IDR_EC_VRSAVaultSignPKCS__FONT
+		dd	8,0,0,80000012h,0,246,0,0,0
+		dd	0,0,-1,0,0,0,1,0,0,0
+		dd	offset IDR_EC_VRSAVaultSignPKCS__NAME,0,0,0,0,0,0
+		dd	0,0,0,0,0,0,0,offset IDR_EC_VRSAVaultSignPKCS__TEXT,0,0,0,0
+		dd	0,0,3,0,1,362,offset VRSAVaultSignPKCS_Procedure
+		dd	0,0,1,0,00140100h,16CF0000h,0,offset IDR_EC_VRSAVaultSignPKCS__DATA,0,0
+
+IDR_EC_VRSAVaultSignPKCS__Button1_DATA	dd	0,0,08000000Fh,0,0,0,0,0,0
+			dd	0,0,0,1,0,0,0,0,offset IDR_EC_VRSAVaultSignPKCS__Button1_FONT
+			dd	8,0,0,80000012h,0,40,0,0,0,0,0,-1,0,0
+			dd	83,0,0,0,offset IDR_EC_VRSAVaultSignPKCS__Button1_TOOLTIPTEXT,offset IDR_EC_VRSAVaultSignPKCS__Button1_NAME,0
+			dd	0,0,0,0,0,0,0,0,0,0
+			dd	0,1,offset IDR_EC_VRSAVaultSignPKCS__Button1_TEXT,0,0,0,0,74
+			dd	1,7,0,1,153,offset VRSAVaultSignPKCS_Button1,0,0,0,0
+			dd	00000000h,54004300h,0,0,0,0
+
+
+App	ECApplication	<0>
+Error	ECErrorStruct	<0>
+ECicc	INITCOMMONCONTROLSEX	<0>
+
+ECszProjectName	dw	'V','R','S','A','V','a','u','l','t','S','i','g','n','P','K','C','S','_',0
+ECszOriginalFileName	dw	'V','R','S','A','V','a','u','l','t','S','i','g','n','P','K','C','S','_','.','e','x','e',0
+ECszHeader	dw	'E','a','s','y',' ','C','o','d','e',' ','2',' ','V','i','s','u','a','l',' ','P','r','o','j','e','c','t',0
+
+.code
+
+align 4
+
+start:
+	invoke ECLibGetOldExceptionFilter
+	mov edi,eax
+	invoke SetUnhandledExceptionFilter,addr ECLibFinalHandler
+	mov [edi],eax
+	invoke GetModuleHandle,NULL
+	mov App.Instance,eax
+	mov App.Major,1
+	mov App.Minor,0
+	mov App.Revision,1
+	invoke InitCommonControls
+	mov ECicc.dwSize,sizeof INITCOMMONCONTROLSEX
+	mov ECicc.dwICC,08FFFH ; All common controls
+	invoke InitCommonControlsEx,addr ECicc
+
+	invoke ECLibInitLibrary,addr ECszProjectName,addr ECszOriginalFileName,addr ECszHeader,3,0,addr App,addr Error,0
+	invoke ECInitProc,App.Instance,NULL,App.CommandLine,SW_SHOWDEFAULT
+	push eax
+	invoke SetUnhandledExceptionFilter,dword ptr [edi]
+	pop eax
+	invoke ExitProcess,eax
+
+
+ECInitProc proc uses ebx edi esi hInst:xword,hPrevInst:xword,CmdLine:xword,CmdShow:xword
+	local bOnIdle:xword,lCount:xword,msg:MSG
+
+	mov bOnIdle,1
+	mov lCount,0
+
+	invoke ECLibGetWindowPointer
+	lea esi,IDR_EC_VRSAVaultSignPKCS__DATA
+	mov dword ptr [eax],esi
+	invoke ECLibCreateWindow,esi,NULL,FALSE,NULL
+	or eax,eax
+	jz L6
+	invoke ECLibLoadAccelerators, App.Instance, IDR_EC_ACCEL_TABLE
+	mov App.Accel,eax
+L2:	invoke ECLibGetMessage,addr msg,NULL,0,0
+	cmp eax,0
+	jle L6
+	invoke ECLibTranslateAccelerator,App.Main,App.Accel,addr msg
+	or eax,eax
+	jnz L2
+	invoke TranslateMessage,addr msg
+	invoke ECLibDispatchMessage,addr msg
+	jmp L2
+L6:	invoke ECLibEndLibrary
+	cmp App.Accel,0
+	je @F
+	invoke DestroyAcceleratorTable,App.Accel
+@@:	mov eax,msg.wParam
+	ret
+ECInitProc endp
+
+include VRSAVaultSignPKCS_.asm
+
+end start

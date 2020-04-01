@@ -1,0 +1,35 @@
+#include "VRSAVaultSignPKCS_Res.h"
+
+1								24		DISCARDABLE	"Debug\\Manifest.xml"
+
+
+
+
+IDR_VERSION VERSIONINFO
+FILEVERSION 1,0,0,1
+PRODUCTVERSION 1,0,0,1
+FILEFLAGSMASK 0x3L
+FILEFLAGS 0x1L
+FILEOS 0x4L
+FILETYPE 0x1L
+FILESUBTYPE 0x0L
+BEGIN
+	BLOCK "StringFileInfo"
+	BEGIN
+		BLOCK "040900"
+		BEGIN
+			VALUE "Comments", "Programmed in assembly with Easy Code 2\0"
+			VALUE "FileDescription", "Easy Code 2 Visual Project\0"
+			VALUE "FileVersion", "1.00.0.0001\0"
+			VALUE "InternalName", "VRSAVaultSignPKCS_\0"
+			VALUE "LegalCopyright", "Copyright ? 2020\0"
+			VALUE "OriginalFilename", "VRSAVaultSignPKCS_.exe\0"
+			VALUE "ProductName", "VRSAVaultSignPKCS_\0"
+			VALUE "ProductVersion", "1.00.0.0001\0"
+		END
+	END
+	BLOCK "VarFileInfo"
+	BEGIN
+		VALUE "Translation", 0x0409, 0
+	END
+END
