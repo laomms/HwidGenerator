@@ -1,0 +1,6 @@
+LIBRARY VRSAVaultSignPKCS
+DESCRIPTION 'Easy Code DLL project'
+
+EXPORTS
+   VRSAVaultSignPKCS
+	
