@@ -728,7 +728,7 @@ BASE64加密: XhTW/U4CI/3Q2jQwFJbNacX7fvW+7omKhhOS1leWbAIRsC+1FRTM5SXsNL696v3Gx8
 
 ```
 
-创建数字激活门票
+创建数字证书
 ```php
 <?xml version="1.0" encoding="utf-8"?>
 <genuineAuthorization
