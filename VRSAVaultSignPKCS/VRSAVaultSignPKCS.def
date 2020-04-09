@@ -3,4 +3,8 @@ DESCRIPTION 'Easy Code DLL project'
 
 EXPORTS
    VRSAVaultSignPKCS
+   _VbnRsaVault_GetPubParams
+   _VbnRsaVault_ModExpPriv_clear
+   ApplyPKCS1SigningFormat
+   VBN_MainLoop
 	

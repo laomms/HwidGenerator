@@ -985,10 +985,10 @@ arg_0           = byte ptr  8
                 retn
 ___report_gsfailure EndP
 ;VRSAVaultSignPKCS(SessionId, 0, pbNewData, pNewData(0), New Byte() {&H43, &HE, &HA}, 256, New CRITICAL_SECTION)
-
-VRSAVaultSignPKCS Proc SessionId:DWord, arg_4:DWord, arg_8:DWord, Dsts:DWord, arg_10:DWord, arg_14:DWord, arg_18:DWord, arg_1C:_RTL_CRITICAL_SECTION
-var_8           = byte ptr -8
-var_4           = dword ptr -4
+;int __userpurge VRSAVaultSignPKCS@<eax>(unsigned int a1@<esi>, const void *(__stdcall *a2)(unsigned int *, unsigned int *), int (__stdcall *lpMem)(void *, const void *), unsigned int dwBytes, const unsigned __int8 *Dst, unsigned int a6, unsigned __int8 *a7, unsigned int *a8)
+VRSAVaultSignPKCS Proc a1:DWord, a2:DWord, arg_4:DWord, arg_8:DWord, Dsts:DWord, a6:DWord, a7:Byte, a8:_RTL_CRITICAL_SECTION
+var_8 = Byte Ptr -8
+var_4 = DWord Ptr -4
 ;arg_4           = dword ptr  0Ch
 ;arg_8           = dword ptr  10h
 ;Dsts = DWord Ptr 14H

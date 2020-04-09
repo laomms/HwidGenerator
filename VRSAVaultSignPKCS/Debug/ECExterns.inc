@@ -716,7 +716,7 @@ vBng_h__8 Proto NEAR
 vBng_h__9 Proto NEAR
 vBng_stk Proto NEAR
 vMemrev Proto NEAR
-VRSAVaultSignPKCS Proto SessionId:DWord, arg_4:DWord, arg_8:DWord, Dsts:DWord, arg_10:DWord, arg_14:DWord, arg_18:DWord, arg_1C:_RTL_CRITICAL_SECTION
+VRSAVaultSignPKCS Proto a1:DWord, a2:DWord, arg_4:DWord, arg_8:DWord, Dsts:DWord, a6:DWord, a7:Byte, a8:_RTL_CRITICAL_SECTION
 __allmul Proto NEAR
 sub_40A730 Proto NEAR
 sub_40A9D0 Proto NEAR
