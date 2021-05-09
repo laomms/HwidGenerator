@@ -6,6 +6,7 @@
 
 # gatherosstate 1803（17134）
 
+Tool to collect the genuine state  
 Gather Downlevel OS Activation State
 
 命令行运行: 
