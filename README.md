@@ -19,55 +19,7 @@ GatherOsState.exe /c
 ```    
 或直接运行.
     
-程序用了Control Flow Guard(CFG)执行流保护技术
 
-```c
-text:004396C0                 push    esi             ; unsigned int *
-.text:004396C1                 push    edi             ; struct _HWID_BLOCK **
-.text:004396C2                 xor     edi, edi
-.text:004396C4                 mov     [esp+200h+var_19C], ecx
-.text:004396C8                 lea     ecx, [esp+200h+var_1D4]
-.text:004396CC                 mov     [esp+200h+var_1A8], edx
-.text:004396D0                 mov     [esp+200h+structHWID], edi
-.text:004396D4                 mov     [esp+200h+HWID_BLOCK], edi
-.text:004396D8                 mov     [esp+200h+pwszValueName], edi
-.text:004396DC                 mov     [esp+200h+ppbValue], edi
-.text:004396E0                 mov     [esp+200h+Src], edi
-.text:004396E4                 mov     [esp+200h+lpFileName], edi
-.text:004396E8                 mov     [esp+200h+hMem], edi
-.text:004396EC                 mov     [esp+200h+var_1D4], edi
-.text:004396F0                 call    ??1CAutoPtr@?$CArray@UCGenuineSignature@@U1@VCAdaptorDefault@@VCPoliciesDefault@@@@QAE@XZ ; CArray<CGenuineSignature,CGenuineSignature,CAdaptorDefault,CPoliciesDefault>::CAutoPtr::~CAutoPtr(void)
-.text:004396F5                 xor     eax, eax
-.text:004396F7                 mov     [esp+200h+var_28], 1000200h
-.text:00439702                 mov     [esp+200h+var_24], 5020001h
-.text:0043970D                 lea     edi, [esp+200h+var_B]
-.text:00439714                 mov     [esp+200h+var_20], 10300h
-.text:0043971F                 xor     ecx, ecx
-.text:00439721                 mov     [esp+200h+var_1C], 6000204h
-.text:0043972C                 mov     esi, 11Ch
-.text:00439731                 mov     [esp+200h+var_18], 7080001h
-.text:0043973C                 mov     [esp+200h+var_14], 30900h
-.text:00439747                 mov     [esp+200h+var_10], 0C00010Ah
-.text:00439752                 mov     [esp+200h+var_C], 7
-.text:0043975A                 stosd
-.text:0043975B                 push    esi             ; Size
-.text:0043975C                 push    ecx             ; Val
-.text:0043975D                 mov     [esp+208h+var_1CC], ecx
-.text:00439761                 stosw
-.text:00439763                 mov     [esp+208h+var_1D0], ecx
-.text:00439767                 mov     [esp+208h+var_1E4], ecx
-.text:0043976B                 mov     [esp+208h+var_1F4], ecx
-.text:0043976F                 stosb
-.text:00439770                 lea     eax, [esp+208h+Dst]
-.text:00439777                 push    eax             ; Dst
-.text:00439778                 mov     [esp+20Ch+var_1EC], ecx
-.text:0043977C                 mov     [esp+20Ch+var_1C0], ecx
-.text:00439780                 mov     [esp+20Ch+lpMem], ecx
-创建一个数组:
-00 02 00 01 01 00 02 05 00 03 01 00 04 02 00 06 01 00 08 07 00 09 03 00 0A 01 00 0C 07 00 00 00 00 00 00 00
-BE 6A 2D E2 72 13 BC 70 B4 FB 47 02
-
-.....
 text:00B497D8 push    offset aOsmajorversion          ; 'OSMajorVersion=%d;OSMinorVersion=%d;OSPlatformId=%d'
 .text:00B497DD push    eax
 .text:00B497DE call    GatherOsInformation
