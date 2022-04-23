@@ -510,7 +510,7 @@ BASE64加密: XhTW/U4CI/3Q2jQwFJbNacX7fvW+7omKhhOS1leWbAIRsC+1FRTM5SXsNL696v3Gx8
 # HwidGetCurrentEx 获取系统硬件信息数组  
 # HwidCreateBlock 通过算法和合并转成新的数组
 # Base64Encode 将数组BASE64加密,取加密的结果连接成Hwid=%s格式,与刚才取到的系统信息拼接成拼接字符串:OSMajorVersion=%d;OSMinorVersion=%d;OSPlatformId=%d;PP=%d;Hwid=%s
-# GetActiveWindowsSkuStatus 获取系统激活状态,这里可以patch掉让其返回0即可
+# GetActiveWindowsSkuStatus 获取系统激活状态
 # CompareSkuChannel 判断默认SKU是Retail还是GVLK
 # SkuGetUpgradeProductKeyEx 获取默认PFN(package family name),组成Pfn=%s格式,并根据该PFN查表得到默认的密钥及ID(DPID3)值
 # SLGetServiceInformation 是否为BiosProductKey
