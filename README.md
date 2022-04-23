@@ -19,8 +19,8 @@ GatherOsState.exe /c
 ```    
 或直接运行.
     
-
-text:00B497D8 push    offset aOsmajorversion          ; 'OSMajorVersion=%d;OSMinorVersion=%d;OSPlatformId=%d'
+```c
+.text:00B497D8 push    offset aOsmajorversion          ; 'OSMajorVersion=%d;OSMinorVersion=%d;OSPlatformId=%d'
 .text:00B497DD push    eax
 .text:00B497DE call    GatherOsInformation
 .text:00B497E3 mov     esi, eax
