@@ -51,7 +51,7 @@ GatherOsState.exe /c
 .text:00B49844 test    esi, esi
 void *__stdcall HwidGetCurrentEx(unsigned __int8 *key, int pid2, struct _HWID **struct_HWID, unsigned int *byte, int **a5, unsigned int *a6)
 
-这个函数在系统自带的LicensingWinRT.dll中就有,但是是内部函数,调用方法我已经写在另一篇文章里.
+这个函数是获取硬件设备唯一标志的函数。
 比如我这里获取的总共64位的硬件数组是:
 3E 00 00 00 00 00 01 00 02 00 02 00 01 00 04 00
 00 00 06 00 01 00 01 00 68 BE FC 19 82 19 CC 2F
