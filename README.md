@@ -518,6 +518,8 @@ BASE64加密: XhTW/U4CI/3Q2jQwFJbNacX7fvW+7omKhhOS1leWbAIRsC+1FRTM5SXsNL696v3Gx8
 # Base64Encode 将组合后的字符串用base64加密,将得到的加密结果连接字符串拼成格式:SL_GET_GENUINE_AUTHZ:%s
 # SLGetGenuineInformation 根据SL_GET_GENUINE_AUTHZ:%s判断系统是否有有效的用户证书
 # CreateGenuineTicketClient 如果不是有效数据执行创建数字证书文件操作
+
+CreateGenuineTicketClient函数主要流程:
 -GetSystemTime(&SystemTime)获取系统时间
 -UtcTimeToIso8601组成TimeStampClient=系统时间格式
 -拼接sessionid,sessionid=上面得到的即SL_GET_GENUINE_AUTHZ字符串中的的base64值
