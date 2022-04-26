@@ -1,4 +1,4 @@
-﻿using HwidGetCurrentEx;
+using HwidGetCurrentEx;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
@@ -472,12 +472,16 @@ namespace gatherosstate
 		static string VRSAVaultSignPKCS(byte[] hashArray)
         {
 			byte[] DST = new byte[256];
-			int hResult = AlgorithmDll.Compute.RSAVaultSignPKCS(0, 0, hashArray, hashArray.Length, DST, DST.Length);
-            if (hResult!=0)
+			DST[254] = 1;
+			hashArray.Reverse().ToArray().CopyTo(DST, 0);
+			byte[] sign = new byte[] { 0x20, 0x04, 0x00, 0x05, 0x01, 0x02, 0x04, 0x03, 0x65, 0x01, 0x48, 0x86, 0x60, 0x09, 0x06, 0x0D, 0x30, 0x31, 0x30 };//0x13
+			sign.CopyTo(DST, hashArray.Length);
+			int hResult = pVbnRsaVault_ModExpPriv_clear(DST, ref DST);            
+            if (hResult != 0)
             {
-				return System.Convert.ToBase64String(DST);
-			}
-			return string.Empty;
+                return System.Convert.ToBase64String(DST);
+            }
+            return string.Empty;
         }
 
 		#endregion
