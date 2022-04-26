@@ -110,38 +110,8 @@ text:00B49896 push    offset aHwidS                   ; "Hwid=%s;"
 .text:00B498CC push    eax
 .text:00B498CD push    offset aVolumeGvlk_0            ; "Volume:GVLK"
 .text:00B498D2 lea     edx, [esp+208h+var_170]
-.text:00B498D9 call    CompareSkuChannel               ;对比SKU版本是否位Retail
+.text:00B498D9 call    CompareSkuChannel               ;对比SKU版本是否为Retail
 
-    Public Enum SLDATATYPE
-        SL_DATA_NONE
-        SL_DATA_SZ
-        SL_DATA_DWORD
-        SL_DATA_BINARY
-        SL_DATA_MULTI_SZ
-        SL_DATA_SUM
-    End Enum
-      <DllImport("slc.dll", EntryPoint:="SLGetWindowsInformation", CharSet:=CharSet.Auto)>
-    Shared Function SLGetWindowsInformation(ByVal ValueName As String, ByRef DataType As SLDATATYPE, ByRef cbValue As UInteger, ByRef Value As IntPtr) As UInteger
-    Dim peDataType As New SLDATATYPE()
-    Dim pcbValue As UInteger = Nothing
-    Dim ppbValue As IntPtr = Nothing
-    Dim hInf As Integer = SLGetWindowsInformation("Kernel-EditionName", peDataType, pcbValue, ppbValue)
-    Dim szEdition As String = Marshal.PtrToStringUni(ppbValue)
-    
-    <DllImport("slc.dll", EntryPoint:="SLGetProductSkuInformation", ExactSpelling:=False, CharSet:=CharSet.Unicode)>
-    Shared Function SLGetProductSkuInformation(ByVal hSLC As IntPtr, ByVal pProductSkuId() As Byte, ByVal pwszValueName As String, ByRef peDataType As SLDATATYPE, ByRef pcbValue As UInteger, ByRef ppbValue As IntPtr) As Integer
-    End Function
-    Dim pcbValue As UInteger = Nothing
-    Dim ppbValue As IntPtr = Nothing
-    Dim datatype As New SLDATATYPE()
-    Dim hSkuInf As Integer = SLGetProductSkuInformation(hSLC, bSkuId, "Channel", datatype, pcbValue, ppbValue)
-    dim szChannel = Marshal.PtrToStringUni(ppbValue)
-                        
-    <DllImport("slc.dll", EntryPoint:="SLGetSLIDList", ExactSpelling:=False, CharSet:=CharSet.Unicode)>
-    Shared Function SLGetSLIDList(ByVal hSLC As IntPtr, ByVal eQueryIdType As SLIDTYPE, ByVal pQueryId() As Byte, ByVal eReturnIdType As SLIDTYPE, ByRef pnReturnIds As UInteger, ByRef ppReturnIds As IntPtr) As Integer
-    End Function
-     SLGetSLIDList(hSLC, SLIDTYPE.SL_ID_PRODUCT_SKU, bSkuId, SLIDTYPE.SL_ID_APPLICATION, pnStatusCount, ppReturnId)
-     
      
 .text:00B4A2A0 lea     edx, [ebp+var_158]
 .text:00B4A2A6 mov     ecx, offset aTimestampclien     ; "TimeStampClient"
