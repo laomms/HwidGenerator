@@ -1,12 +1,16 @@
-using HwidGetCurrentEx;
+﻿using HwidGetCurrentEx;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace gatherosstate
 {
@@ -348,8 +352,9 @@ namespace gatherosstate
 			SessionId = base64string2 + ";" + UtcTimeToIso8601();
 			byte[] hashArray = ComputeHashEx("SessionId=" + SessionId);
 			string base64string3= VRSAVaultSignPKCS(hashArray);
-			if (string.IsNullOrEmpty(base64string3))
-				SaveData(SessionId, base64string3, Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData) + "\\Microsoft\\Windows\\ClipSVC\\GenuineTicket\\DigitalLicense.xml");
+			if (!string.IsNullOrEmpty(base64string3))
+				SaveData(SessionId, base64string3, System.IO.Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName) + "\\DigitalLicense.xml");
+				//SaveData(SessionId, base64string3, Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData) + "\\Microsoft\\Windows\\ClipSVC\\GenuineTicket\\DigitalLicense.xml");
 
 		}
 
@@ -471,19 +476,20 @@ namespace gatherosstate
 
 		static string VRSAVaultSignPKCS(byte[] hashArray)
         {
+			IntPtr retValue = Marshal.AllocHGlobal(256);
 			byte[] DST = new byte[256];
 			DST[254] = 1;
 			hashArray.Reverse().ToArray().CopyTo(DST, 0);
 			byte[] sign = new byte[] { 0x20, 0x04, 0x00, 0x05, 0x01, 0x02, 0x04, 0x03, 0x65, 0x01, 0x48, 0x86, 0x60, 0x09, 0x06, 0x0D, 0x30, 0x31, 0x30 };//0x13
 			sign.CopyTo(DST, hashArray.Length);
-			int hResult = pVbnRsaVault_ModExpPriv_clear(DST, ref DST);            
-            if (hResult != 0)
+			Marshal.Copy(DST, 0, retValue, 256);
+			byte[] pData = VbnRsaVault_ModExpPriv_clear.compute.ModExpPriv_clear(hashArray);            
+            if (pData != null)
             {
-                return System.Convert.ToBase64String(DST);
+                return System.Convert.ToBase64String(pData);
             }
             return string.Empty;
         }
-
 		#endregion
 
 	}
