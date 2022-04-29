@@ -27,16 +27,16 @@ namespace gatherosstate
 		[StructLayout(LayoutKind.Sequential)]
 		public class RtlOsVersionInfoExW
 		{
-			public UInt32 dwOSVersionInfoSize;
-			public UInt32 dwMajorVersion;
-			public UInt32 dwMinorVersion;
-			public UInt32 dwBuildNumber;
-			public UInt32 dwPlataformId;
+			public uint dwOSVersionInfoSize;
+			public uint dwMajorVersion;
+			public uint dwMinorVersion;
+			public uint dwBuildNumber;
+			public uint dwPlataformId;
 			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
 			public string szCSDVersion;
-			public UInt16 wServicePackMajor;
-			public UInt16 wServicePackMinor;
-			public UInt16 wSuiteMask;
+			public ushort wServicePackMajor;
+			public ushort wServicePackMinor;
+			public ushort wSuiteMask;
 			public byte bProductType;
 			public byte bReserved;
 		}
@@ -70,27 +70,30 @@ namespace gatherosstate
 		[DllImport("slc.dll", EntryPoint = "SLGetWindowsInformationDWORD", CharSet = CharSet.Auto)]
 		extern static int SLGetWindowsInformationDWORD(string pwszValueName, ref int pdwValue);
 
-		[DllImport("kernel32")]
+		[DllImport("kernel32.dll")]
 		static extern void GetSystemTime(ref SYSTEMTIME lpSystemTime);
 
-		[DllImport("kernel32")]
-		private extern static void GetSystemTimeAsFileTime(ref FILE_TIME lpSystemTimeAsFileTime);
+		[DllImport("kernel32.dll")]
+		extern static void GetSystemTimeAsFileTime(ref FILE_TIME lpSystemTimeAsFileTime);
 
 		[DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-		private extern static bool FileTimeToSystemTime((ref FILE_TIME lpFileTime, out SYSTEMTIME lpSystemTime);
+		extern static bool FileTimeToSystemTime(ref FILE_TIME lpFileTime, out SYSTEMTIME lpSystemTime);
 
 		[DllImport("advapi32.dll")]
 		extern static bool CryptCreateHash(IntPtr hProv, ALG_ID Algid, IntPtr hKey, uint dwFlags, ref IntPtr phHash);
+
 		[DllImport("advapi32.dll", SetLastError = true)]
 		extern static bool CryptGetHashParam(IntPtr hHash, int dwParam, byte[] pbData,ref int pdwDataLen, int dwFlags);
+
 		[DllImport("Advapi32.dll", SetLastError = true)]
 		extern static bool CryptHashData(IntPtr hHash, byte[] pbData, int dwDataLen, int dwFlags);
+
 		[DllImport("advapi32.dll", SetLastError = true)]
 		extern static bool CryptDestroyHash(IntPtr hHash);
+
 		[DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
 		extern static bool CryptAcquireContext(ref IntPtr hProv, string pszContainer, string pszProvider, uint dwProvType, uint dwFlags);
-
-
+		
 		#endregion
 
 		#region define
