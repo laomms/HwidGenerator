@@ -445,7 +445,7 @@ namespace gatherosstate
 			SYSTEMTIME SysTime = new SYSTEMTIME();
 			FILE_TIME filetime = new FILE_TIME();
 			filetime.dwLowDateTime = SystemTimeAsFileTime.dwLowDateTime;
-			if (Convert.ToBoolean(FileTimeToSystemTime(ref filetime,out SysTime)) == true)
+			if (FileTimeToSystemTime(ref filetime,out SysTime))
 			{
 				var timestampclient = SysTime.wYear.ToString("0000") + "-" + SysTime.wMonth.ToString("00") + "-" + SysTime.wDay.ToString("00") + "T" + SysTime.wHour.ToString("00") + ":" + SysTime.wMinute.ToString("00") + ":" + SysTime.wSecond.ToString("00") + "Z";
 				return timestampclient.Replace(timestampclient.Substring(0, 10), "2038-01-19");
