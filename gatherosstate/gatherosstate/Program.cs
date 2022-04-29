@@ -1,4 +1,4 @@
-﻿using HwidGetCurrentEx;
+using HwidGetCurrentEx;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
@@ -25,20 +25,15 @@ namespace gatherosstate
 		}
 
 		[StructLayout(LayoutKind.Sequential)]
-		public class RtlOsVersionInfoExW
+		public struct RTL_OSVERSIONINFOEX
 		{
 			public uint dwOSVersionInfoSize;
 			public uint dwMajorVersion;
 			public uint dwMinorVersion;
 			public uint dwBuildNumber;
-			public uint dwPlataformId;
+			public uint dwPlatformId;
 			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
 			public string szCSDVersion;
-			public ushort wServicePackMajor;
-			public ushort wServicePackMinor;
-			public ushort wSuiteMask;
-			public byte bProductType;
-			public byte bReserved;
 		}
 
 		[StructLayout(LayoutKind.Sequential)]
@@ -65,7 +60,7 @@ namespace gatherosstate
 		#region pinvoke
 
 		[DllImport("Ntdll.dll", CharSet = CharSet.Unicode, ExactSpelling = true)]
-		extern static int RtlGetVersion([In(), Out()] RtlOsVersionInfoExW osversion);
+		extern static int RtlGetVersion(out RTL_OSVERSIONINFOEX osversion);
 
 		[DllImport("slc.dll", EntryPoint = "SLGetWindowsInformationDWORD", CharSet = CharSet.Auto)]
 		extern static int SLGetWindowsInformationDWORD(string pwszValueName, ref int pdwValue);
@@ -422,20 +417,20 @@ namespace gatherosstate
 		}
 		static string GetOsVersion() 
 		{
-			RtlOsVersionInfoExW osVersionInfo = new RtlOsVersionInfoExW();
+			RTL_OSVERSIONINFOEX osVersionInfo = new RTL_OSVERSIONINFOEX();
 			osVersionInfo.dwOSVersionInfoSize = (uint)Marshal.SizeOf(osVersionInfo);
-			int status = RtlGetVersion(osVersionInfo);
+			int status = RtlGetVersion(out osVersionInfo);
 			if (status != 0)
 			{
 				return ""; 
 			}			
-			return "OSMajorVersion=" + osVersionInfo.dwMajorVersion + ";OSMinorVersion=" + osVersionInfo.dwMinorVersion + ";OSPlatformId=" + osVersionInfo.dwPlataformId + ";PP=0";
+			return "OSMajorVersion=" + osVersionInfo.dwMajorVersion + ";OSMinorVersion=" + osVersionInfo.dwMinorVersion + ";OSPlatformId=" + osVersionInfo.dwPlatformId + ";PP=0";
 		}
 		static Version NativeOsVersion()
 		{
-			RtlOsVersionInfoExW osVersionInfo = new RtlOsVersionInfoExW();
-			osVersionInfo.dwOSVersionInfoSize = (uint)Marshal.SizeOf(typeof(RtlOsVersionInfoExW));
-			int status = RtlGetVersion(osVersionInfo);
+			RTL_OSVERSIONINFOEX osVersionInfo = new RTL_OSVERSIONINFOEX();
+			osVersionInfo.dwOSVersionInfoSize = (uint)Marshal.SizeOf(typeof(RTL_OSVERSIONINFOEX));
+			int status = RtlGetVersion(out osVersionInfo);
 			if (status != 0)
 			{
 				return Environment.OSVersion.Version;
