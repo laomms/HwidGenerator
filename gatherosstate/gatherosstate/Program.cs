@@ -41,6 +41,12 @@ namespace gatherosstate
 			public byte bReserved;
 		}
 
+		[StructLayout(LayoutKind.Sequential)]
+		public struct FILE_TIME
+		{
+			public uint dwLowDateTime;
+			public uint dwHighDateTime;
+		}
 
 		[StructLayout(LayoutKind.Sequential)]
 		public struct SYSTEMTIME
@@ -67,6 +73,12 @@ namespace gatherosstate
 		[DllImport("kernel32")]
 		static extern void GetSystemTime(ref SYSTEMTIME lpSystemTime);
 
+		[DllImport("kernel32")]
+		private extern static void GetSystemTimeAsFileTime(ref FILE_TIME lpSystemTimeAsFileTime);
+
+		[DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+		private extern static bool FileTimeToSystemTime([In()] ref FILE_TIME lpFileTime, out SYSTEMTIME lpSystemTime);
+
 		[DllImport("advapi32.dll")]
 		extern static bool CryptCreateHash(IntPtr hProv, ALG_ID Algid, IntPtr hKey, uint dwFlags, ref IntPtr phHash);
 		[DllImport("advapi32.dll", SetLastError = true)]
@@ -82,6 +94,7 @@ namespace gatherosstate
 		#endregion
 
 		#region define
+		static bool KMS38=false; 
 		static Dictionary<string, Tuple<int, int, string, string>> UpdateProductKey = new Dictionary<string, Tuple<int, int, string,string>>()
 	{
 		{"43TBQ-NH92J-XKTM7-KT3KK-P39PB", new Tuple<int, int, string, string>(125, 17763, "EnterpriseS","Microsoft.Windows.125.X21-83233_8wekyb3d8bbwe")},
@@ -329,7 +342,6 @@ namespace gatherosstate
 			byte[] DST = HWID.HwidGetCurrentEx();
 			string Base64String1 = HWID.HwidCreateBlock(DST, DST[0]);
 			string SessionId = VersionString + ";" + "Hwid=" + Base64String1 + ";";
-
 			
 			int EditionID = 0;
 			int szRes = SLGetWindowsInformationDWORD("Kernel-ProductInfo",ref EditionID);
@@ -342,10 +354,21 @@ namespace gatherosstate
 					EditionID =int.Parse(SkuList.Where((x) => x.Value.ToString() == EditionName).Select((y) => y.Key.ToString()).ToList()[0]);
 				}
 			}
-			string ProductKeys = UpdateProductKey.Where((x) => x.Value.Item1 == EditionID && NativeOsVersion().Build >= x.Value.Item2).Select((y) => y.Key).ToList()[0];
-			if (string.IsNullOrEmpty(ProductKeys)) return;
-			string pfn = UpdateProductKey[ProductKeys].Item4;
-			SessionId = SessionId + "Pfn=" + pfn + ";DownlevelGenuineState=1;";
+
+			if (KMS38)
+            {
+				string ProductKeys = KMSProductKey.Where((x) => x.Value.Item1 == EditionID && NativeOsVersion().Build >= x.Value.Item2).Select((y) => y.Key).ToList()[0];
+				if (string.IsNullOrEmpty(ProductKeys)) return;
+				SessionId = SessionId + "GVLKExp=" + FileTime2SystemTime() + ";DownlevelGenuineState=1;";
+			}
+			else
+            {
+				string ProductKeys = UpdateProductKey.Where((x) => x.Value.Item1 == EditionID && NativeOsVersion().Build >= x.Value.Item2).Select((y) => y.Key).ToList()[0];
+				if (string.IsNullOrEmpty(ProductKeys)) return;
+				string pfn = UpdateProductKey[ProductKeys].Item4;
+				SessionId = SessionId + "Pfn=" + pfn + ";DownlevelGenuineState=1;";
+			}
+			
 			byte[] bytesessionid = System.Text.Encoding.Unicode.GetBytes(SessionId);
 			bytesessionid = bytesessionid.Concat(new byte[] { 0, 0 }).ToArray();
 			string base64string2 = Convert.ToBase64String(bytesessionid);
@@ -416,6 +439,22 @@ namespace gatherosstate
 			}
 			return new Version((int)osVersionInfo.dwMajorVersion, (int)osVersionInfo.dwMinorVersion, (int)osVersionInfo.dwBuildNumber);
 		}
+
+		static string FileTime2SystemTime()
+		{
+			FILE_TIME SystemTimeAsFileTime = new FILE_TIME();
+			GetSystemTimeAsFileTime(ref SystemTimeAsFileTime);
+			SYSTEMTIME SysTime = new SYSTEMTIME();
+			FILE_TIME filetime = new FILE_TIME();
+			filetime.dwLowDateTime = SystemTimeAsFileTime.dwLowDateTime;
+			if (Convert.ToBoolean(FileTimeToSystemTime(ref filetime,out SysTime)) == true)
+			{
+				var timestampclient = SysTime.wYear.ToString("0000") + "-" + SysTime.wMonth.ToString("00") + "-" + SysTime.wDay.ToString("00") + "T" + SysTime.wHour.ToString("00") + ":" + SysTime.wMinute.ToString("00") + ":" + SysTime.wSecond.ToString("00") + "Z";
+				return timestampclient.Replace(timestampclient.Substring(0, 10), "2038-01-19");
+			}
+			return "";
+		}
+
 		private static string UtcTimeToIso8601()
 		{
 			string timestampclient = "";
@@ -473,7 +512,6 @@ namespace gatherosstate
 			CryptDestroyHash(hHash);
 			return ReturnBytes;
 		}
-
 		static string VRSAVaultSignPKCS(byte[] hashArray)
         {
 			IntPtr retValue = Marshal.AllocHGlobal(256);
@@ -490,6 +528,7 @@ namespace gatherosstate
             }
             return string.Empty;
         }
+
 		#endregion
 
 	}
