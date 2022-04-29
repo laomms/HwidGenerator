@@ -77,7 +77,7 @@ namespace gatherosstate
 		private extern static void GetSystemTimeAsFileTime(ref FILE_TIME lpSystemTimeAsFileTime);
 
 		[DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-		private extern static bool FileTimeToSystemTime([In()] ref FILE_TIME lpFileTime, out SYSTEMTIME lpSystemTime);
+		private extern static bool FileTimeToSystemTime((ref FILE_TIME lpFileTime, out SYSTEMTIME lpSystemTime);
 
 		[DllImport("advapi32.dll")]
 		extern static bool CryptCreateHash(IntPtr hProv, ALG_ID Algid, IntPtr hKey, uint dwFlags, ref IntPtr phHash);
