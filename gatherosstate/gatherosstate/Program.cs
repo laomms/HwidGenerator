@@ -455,15 +455,15 @@ namespace gatherosstate
 
 		private static string UtcTimeToIso8601()
 		{
-			string timestampclient = "";
+			string timestampclient = String.Empty;
 			SYSTEMTIME SysTime = new SYSTEMTIME();
 			GetSystemTime(ref SysTime);
 			timestampclient = SysTime.wYear.ToString("0000") + "-" + SysTime.wMonth.ToString("00") + "-" + SysTime.wDay.ToString("00") + "T" + SysTime.wHour.ToString("00") + ":" + SysTime.wMinute.ToString("00") + ":" + SysTime.wSecond.ToString("00") + "Z";
-			if (string.IsNullOrEmpty(timestampclient))
+			if (!string.IsNullOrEmpty(timestampclient))
 			{
-				return string.Empty; 
+				timestampclient="TimeStampClient=" + timestampclient;
 			}
-			return "TimeStampClient=" + timestampclient;			
+			return timestampclient;			
 		}
 		private static byte[] ComputeHashEx(string szSessionId)
 		{
