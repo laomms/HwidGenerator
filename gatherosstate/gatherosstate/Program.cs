@@ -1,4 +1,4 @@
-using HwidGetCurrentEx;
+
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
@@ -18,10 +18,17 @@ namespace gatherosstate
     {
 
 		#region struct
-		public enum ALG_ID
+		public enum ALG_ID:uint
 		{
 			CALG_MD5 = 0x8003,
 			CALG_RSA = 0x800C
+		}
+
+		public enum HashParameters
+		{
+			HP_ALGID = 0x0001,  
+			HP_HASHVAL = 0x2,
+			HP_HASHSIZE = 0x0004 
 		}
 
 		[StructLayout(LayoutKind.Sequential)]
@@ -74,21 +81,31 @@ namespace gatherosstate
 		[DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
 		extern static bool FileTimeToSystemTime(ref FILE_TIME lpFileTime, out SYSTEMTIME lpSystemTime);
 
-		[DllImport("advapi32.dll")]
-		extern static bool CryptCreateHash(IntPtr hProv, ALG_ID Algid, IntPtr hKey, uint dwFlags, ref IntPtr phHash);
+		[DllImport("AdvApi32.dll", SetLastError = true, ExactSpelling = true)]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		public static extern bool CryptAcquireContextW(out IntPtr providerContext, [MarshalAs(UnmanagedType.LPWStr)] string container, [MarshalAs(UnmanagedType.LPWStr)] string provider, int providerType, uint flags);
+
+		[DllImport("advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+		public static extern bool CryptCreateHash(IntPtr hProv, uint algId, IntPtr hKey, uint dwFlags, ref IntPtr phHash);
 
 		[DllImport("advapi32.dll", SetLastError = true)]
-		extern static bool CryptGetHashParam(IntPtr hHash, int dwParam, byte[] pbData,ref int pdwDataLen, int dwFlags);
-
-		[DllImport("Advapi32.dll", SetLastError = true)]
-		extern static bool CryptHashData(IntPtr hHash, byte[] pbData, int dwDataLen, int dwFlags);
+		public static extern bool CryptDestroyHash(IntPtr hHash);
 
 		[DllImport("advapi32.dll", SetLastError = true)]
-		extern static bool CryptDestroyHash(IntPtr hHash);
+		public static extern bool CryptDestroyKey(IntPtr phKey);
 
-		[DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-		extern static bool CryptAcquireContext(ref IntPtr hProv, string pszContainer, string pszProvider, uint dwProvType, uint dwFlags);
-		
+		[DllImport("advapi32.dll", SetLastError = true)]
+		public static extern bool CryptHashData(IntPtr hHash, byte[] pbData, uint dataLen, uint flags);
+
+		[DllImport("Advapi32.dll", EntryPoint = "CryptReleaseContext", CharSet = CharSet.Unicode, SetLastError = true)]
+		public static extern bool CryptReleaseContext(IntPtr hProv, Int32 dwFlags);
+
+		[DllImport("advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+		public static extern bool CryptGetHashParam(IntPtr hHash, uint dwParam, Byte[] pbData, ref uint pdwDataLen, uint dwFlags);
+
+		[DllImport("msvcrt.dll", CallingConvention = CallingConvention.Cdecl)]
+		public static extern IntPtr memset(byte[] dest, int c, int count);
+
 		#endregion
 
 		#region define
@@ -337,8 +354,8 @@ namespace gatherosstate
 				return;
 			}
 
-			byte[] DST = HWID.HwidGetCurrentEx();
-			string Base64String1 = HWID.HwidCreateBlock(DST, DST[0]);
+			byte[] DST =HwidGetCurrentEx.HWID.HwidGetCurrentEx();
+			string Base64String1 = HwidGetCurrentEx.HWID.HwidCreateBlock(DST, DST[0]);
 			string SessionId = VersionString + ";" + "Hwid=" + Base64String1 + ";";
 			
 			int EditionID = 0;
@@ -370,12 +387,18 @@ namespace gatherosstate
 			byte[] bytesessionid = System.Text.Encoding.Unicode.GetBytes(SessionId);
 			bytesessionid = bytesessionid.Concat(new byte[] { 0, 0 }).ToArray();
 			string base64string2 = Convert.ToBase64String(bytesessionid);
-			SessionId = base64string2 + ";" + UtcTimeToIso8601();
-			byte[] hashArray = ComputeHashEx("SessionId=" + SessionId);
-			string base64string3= VRSAVaultSignPKCS(hashArray);
-			if (!string.IsNullOrEmpty(base64string3))
+			SessionId = "SessionId=" + base64string2 + ";" + UtcTimeToIso8601();
+			//SessionId = "SessionId=TwBTAE0AYQBqAG8AcgBWAGUAcgBzAGkAbwBuAD0AMQAwADsATwBTAE0AaQBuAG8AcgBWAGUAcgBzAGkAbwBuAD0AMAA7AE8AUwBQAGwAYQB0AGYAbwByAG0ASQBkAD0AMgA7AFAAUAA9ADAAOwBIAHcAaQBkAD0AYgBRAEEAQQBBAEIATQBBAFEAZwBBAEEAQQBBAEEAQQBBAFEAQQBDAEEAQQBJAEEAQQB3AEEARQBBAEEAQQBBAEIAZwBBAEIAQQBBAEUAQQBhAEwANwA4AEcAWQBJAFoAZwBqAEsAbwArAEoAbwBZAGQAaQB1AFEATgBnADcAVABHAE4AYQB3AFcAaABlAE4ARABvADUAZgA4AGEAUQBPADMAaQA1AGMAVQBKAHAAYwBwAEcARABXADgAUgBEAHYARABBAEEAQwBBAEEARQBCAEEAQQBJAEYAQQBBAE0AQgBBAEEAUQBDAEEAQQBZAEIAQQBBAGcASABBAEEAawBEAEEAQQBvAEIAQQBBAHcASABBAEEAQQBBAEEAQQBBAEEAQQBBAD0APQA7AFAAZgBuAD0ATQBpAGMAcgBvAHMAbwBmAHQALgBXAGkAbgBkAG8AdwBzAC4ANAA4AC4AWAAxADkALQA5ADgAOAA0ADEAXwA4AHcAZQBrAHkAYgAzAGQAOABiAGIAdwBlADsARABvAHcAbgBsAGUAdgBlAGwARwBlAG4AdQBpAG4AZQBTAHQAYQB0AGUAPQAxADsAAAA=;TimeStampClient=2022-05-05T00:00:00Z";
+			byte[] hashArray = ComputeHashEx(SessionId);
+			Debug.Print(hashArray.Length.ToString() + Environment.NewLine + BitConverter.ToString(hashArray).Replace("-", " "));
+			byte[] Dst= VRSAVaultSignPKCS.VRSA.SignPKCS(hashArray);
+			if (Dst!=null)
+            {
+				string base64string3 = System.Convert.ToBase64String(Dst);
 				SaveData(SessionId, base64string3, System.IO.Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName) + "\\DigitalLicense.xml");
 				//SaveData(SessionId, base64string3, Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData) + "\\Microsoft\\Windows\\ClipSVC\\GenuineTicket\\DigitalLicense.xml");
+
+			}
 
 		}
 
@@ -455,48 +478,50 @@ namespace gatherosstate
 
 		private static string UtcTimeToIso8601()
 		{
-			string timestampclient = String.Empty;
+			string timestampclient = "";
 			SYSTEMTIME SysTime = new SYSTEMTIME();
 			GetSystemTime(ref SysTime);
-			timestampclient = SysTime.wYear.ToString("0000") + "-" + SysTime.wMonth.ToString("00") + "-" + SysTime.wDay.ToString("00") + "T" + SysTime.wHour.ToString("00") + ":" + SysTime.wMinute.ToString("00") + ":" + SysTime.wSecond.ToString("00") + "Z";
-			if (!string.IsNullOrEmpty(timestampclient))
+			//timestampclient = SysTime.wYear.ToString("0000") + "-" + SysTime.wMonth.ToString("00") + "-" + SysTime.wDay.ToString("00") + "T" + SysTime.wHour.ToString("00") + ":" + SysTime.wMinute.ToString("00") + ":" + SysTime.wSecond.ToString("00") + "Z";
+			timestampclient = SysTime.wYear.ToString("0000") + "-" + SysTime.wMonth.ToString("00") + "-" + SysTime.wDay.ToString("00") + "T" + "00:00:00Z";
+			if (string.IsNullOrEmpty(timestampclient))
 			{
-				timestampclient="TimeStampClient=" + timestampclient;
+				return string.Empty; 
 			}
-			return timestampclient;			
+			return "TimeStampClient=" + timestampclient;			
 		}
 		private static byte[] ComputeHashEx(string szSessionId)
 		{
-			var cryptographic = "Microsoft Enhanced RSA and AES Cryptographic Provider";
-			IntPtr phProv = new IntPtr();
-			uint CRYPt_VERIFYCONTEXT = 0xF0000020U;
-			uint PROV_RsA_FULL = 0x18;
-			bool res = CryptAcquireContext(ref phProv, null, cryptographic, PROV_RsA_FULL, CRYPt_VERIFYCONTEXT);
-			byte[] pbDatas = new byte[4];
-			byte[] pNewData = ComputeHash(phProv, szSessionId, pbDatas);
-			pbDatas = new byte[pNewData[0]];			
-			byte[] pbNewData = ComputeHash(phProv, szSessionId, pbDatas);
-			return pbNewData;
+
+			IntPtr phProv = IntPtr.Zero;
+			if (CryptAcquireContextW(out phProv, null, "Microsoft Enhanced RSA and AES Cryptographic Provider", 0x18, 0xF0000020))
+			{
+				byte[] pbDatas = new byte[4];
+				byte[] pNewData = ComputeHash(phProv, szSessionId, pbDatas);
+				pbDatas = new byte[pNewData[0]];
+				byte[] pbNewData = ComputeHash(phProv, szSessionId, pbDatas);
+				return pbNewData;
+			}
+			return null;
+
 		}
 		private static byte[] ComputeHash(IntPtr phProv, string SessionId, byte[] pbDatas)
 		{
 			byte[] ReturnBytes = null;
-			IntPtr hHash = new IntPtr();			
+			IntPtr hHash = new IntPtr();
 			byte[] pbData = new byte[4];
-			if (CryptCreateHash(phProv, ALG_ID.CALG_RSA, IntPtr.Zero, 0, ref hHash))
+			if (CryptCreateHash(phProv, (uint)ALG_ID.CALG_RSA, IntPtr.Zero, 0, ref hHash))
 			{
-				int pdwDataLen = 4;
-				if (CryptGetHashParam(hHash, 4, pbData,ref pdwDataLen, 0))
+				uint pdwDataLen = 4;
+				if (CryptGetHashParam(hHash, 4, pbData, ref pdwDataLen, 0))
 				{
 					if (!(pbDatas.Length == 4))
 					{
-						var pdDataLen = BitConverter.ToInt32(pbData, 0);
-						byte[] pbBuffer = System.Text.Encoding.UTF8.GetBytes(SessionId);
-						if (CryptHashData(hHash, pbBuffer, pbBuffer.Length, 0))
+						byte[] pbBuffer = Encoding.ASCII.GetBytes(SessionId);
+						if (CryptHashData(hHash, pbBuffer, (uint)pbBuffer.Length, 0))
 						{
-							pdwDataLen = pbDatas.Length;
-							if (CryptGetHashParam(hHash, 2, pbDatas, ref pdwDataLen, 0))
-							{								
+							pdwDataLen = (uint)pbDatas.Length;
+							if (CryptGetHashParam(hHash, (uint)HashParameters.HP_HASHVAL, pbDatas, ref pdwDataLen, 0))
+							{
 								ReturnBytes = pbDatas;
 							}
 						}
@@ -510,23 +535,7 @@ namespace gatherosstate
 			CryptDestroyHash(hHash);
 			return ReturnBytes;
 		}
-		static string VRSAVaultSignPKCS(byte[] hashArray)
-        {
-			IntPtr retValue = Marshal.AllocHGlobal(256);
-			byte[] DST = new byte[256];
-			DST[254] = 1;
-			hashArray.Reverse().ToArray().CopyTo(DST, 0);
-			byte[] sign = new byte[] { 0x20, 0x04, 0x00, 0x05, 0x01, 0x02, 0x04, 0x03, 0x65, 0x01, 0x48, 0x86, 0x60, 0x09, 0x06, 0x0D, 0x30, 0x31, 0x30 };//0x13
-			sign.CopyTo(DST, hashArray.Length);
-			Marshal.Copy(DST, 0, retValue, 256);
-			byte[] pData = VbnRsaVault_ModExpPriv_clear.compute.ModExpPriv_clear(hashArray);            
-            if (pData != null)
-            {
-                return System.Convert.ToBase64String(pData);
-            }
-            return string.Empty;
-        }
-
+		
 		#endregion
 
 	}
