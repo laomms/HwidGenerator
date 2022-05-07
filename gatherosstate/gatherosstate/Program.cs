@@ -357,7 +357,8 @@ namespace gatherosstate
 			byte[] DST =HwidGetCurrentEx.HWID.HwidGetCurrentEx();
 			string Base64String1 = HwidGetCurrentEx.HWID.HwidCreateBlock(DST, DST[0]);
 			string SessionId = VersionString + ";" + "Hwid=" + Base64String1 + ";";
-			
+			Console.WriteLine(SessionId +"\r\n");
+
 			int EditionID = 0;
 			int szRes = SLGetWindowsInformationDWORD("Kernel-ProductInfo",ref EditionID);
 			if (szRes != 0)
@@ -388,18 +389,21 @@ namespace gatherosstate
 			bytesessionid = bytesessionid.Concat(new byte[] { 0, 0 }).ToArray();
 			string base64string2 = Convert.ToBase64String(bytesessionid);
 			SessionId = "SessionId=" + base64string2 + ";" + UtcTimeToIso8601();
-			//SessionId = "SessionId=TwBTAE0AYQBqAG8AcgBWAGUAcgBzAGkAbwBuAD0AMQAwADsATwBTAE0AaQBuAG8AcgBWAGUAcgBzAGkAbwBuAD0AMAA7AE8AUwBQAGwAYQB0AGYAbwByAG0ASQBkAD0AMgA7AFAAUAA9ADAAOwBIAHcAaQBkAD0AYgBRAEEAQQBBAEIATQBBAFEAZwBBAEEAQQBBAEEAQQBBAFEAQQBDAEEAQQBJAEEAQQB3AEEARQBBAEEAQQBBAEIAZwBBAEIAQQBBAEUAQQBhAEwANwA4AEcAWQBJAFoAZwBqAEsAbwArAEoAbwBZAGQAaQB1AFEATgBnADcAVABHAE4AYQB3AFcAaABlAE4ARABvADUAZgA4AGEAUQBPADMAaQA1AGMAVQBKAHAAYwBwAEcARABXADgAUgBEAHYARABBAEEAQwBBAEEARQBCAEEAQQBJAEYAQQBBAE0AQgBBAEEAUQBDAEEAQQBZAEIAQQBBAGcASABBAEEAawBEAEEAQQBvAEIAQQBBAHcASABBAEEAQQBBAEEAQQBBAEEAQQBBAD0APQA7AFAAZgBuAD0ATQBpAGMAcgBvAHMAbwBmAHQALgBXAGkAbgBkAG8AdwBzAC4ANAA4AC4AWAAxADkALQA5ADgAOAA0ADEAXwA4AHcAZQBrAHkAYgAzAGQAOABiAGIAdwBlADsARABvAHcAbgBsAGUAdgBlAGwARwBlAG4AdQBpAG4AZQBTAHQAYQB0AGUAPQAxADsAAAA=;TimeStampClient=2022-05-05T00:00:00Z";
+			Console.WriteLine(SessionId + "\r\n"); 
+
 			byte[] hashArray = ComputeHashEx(SessionId);
 			Debug.Print(hashArray.Length.ToString() + Environment.NewLine + BitConverter.ToString(hashArray).Replace("-", " "));
+
 			byte[] Dst= VRSAVaultSignPKCS.VRSA.SignPKCS(hashArray);
 			if (Dst!=null)
             {
 				string base64string3 = System.Convert.ToBase64String(Dst);
+				Console.WriteLine(base64string3 + "\r\n");
 				SaveData(SessionId, base64string3, System.IO.Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName) + "\\DigitalLicense.xml");
 				//SaveData(SessionId, base64string3, Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData) + "\\Microsoft\\Windows\\ClipSVC\\GenuineTicket\\DigitalLicense.xml");
 
 			}
-
+			Console.Read();
 		}
 
 		#region function
