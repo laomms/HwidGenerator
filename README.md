@@ -500,7 +500,7 @@ CreateGenuineTicketClient函数主要流程:
 -将字符串"downlevelGTkey"和固定公钥key=BgIAAACkAABSU0ExAAgAAAEAAQARq+V11k+dvHMCaLWVCaSbeQNlOdWTLkkl0hdMh5V3YhLU2R4h0Jd+7k7qfZ4aIo4ussduwGgmyDRikj5L2R77GG2ciHk4i8siK8qg7frOU0KT5rEks3qVj38C3dS1wS6D67shBFrxPlOEP8+JlelgP7Gxmwdao7NF4LXZ3+KdbJ//9jkmN8iAOP0N2XzW0/cJp9P1q6hE7eeqc/3Qn3zMr0q1Dx7vstN98oV17hNYCwumOxxS1rH+3n7ap2JKRSelo8Jvi214jZLBL+hOtYaGpxs7zIL3ofpoaYy5g7pc/DaTvyfpJho5634jK7dXVFMpzJZMn9w0F/3rkquk0Amm"以及签名数组的base64字符串拼接成完整的签名字符串.
 -将sppclient与<genuineproperties origin="%s">拼接成<genuineProperties origin="sppclient">
 -把剩下的XML标签补全,<properties>%s</properties> <signatures>%s</signatures> <signature name="downlevelGTkey" method="rsa-sha256" key="%s" </signature>...
--CombinePath SaveBinaryAsFile 创建数字证书,供clipup调用CreateProductKeyGT和CreateOsLicense函数安装到token文件里。
+-CombinePath SaveBinaryAsFile 创建数字证书,利用LaunchAsProtectedProcess函数调用clipup.exe安装证书到ClipSvc服务的token文件里。
 
 ```
 
