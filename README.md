@@ -2,7 +2,7 @@
 
 ![image](https://github.com/laomms/gatherosstate/blob/master/test.png)   
 
-```
+
 基本流程：
 ```php
 # GetVersionExW 获取系统版本信息 转成格式 OSMajorVersion=%d;OSMinorVersion=%d;OSPlatformId=%d
