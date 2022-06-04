@@ -8,7 +8,7 @@
 基本流程：
 ```php
 # GetVersionExW 获取系统版本信息 转成格式 OSMajorVersion=%d;OSMinorVersion=%d;OSPlatformId=%d
-# HwidGetCurrentEx 获取系统硬件信息数组  
+# HwidGetCurrentEx 获取系统硬件指纹信息  
 # HwidCreateBlock 通过算法和合并转成新的数组
 # Base64Encode 将数组BASE64加密,取加密的结果连接成Hwid=%s格式,与刚才取到的系统信息拼接成拼接字符串:OSMajorVersion=%d;OSMinorVersion=%d;OSPlatformId=%d;PP=%d;Hwid=%s
 # GetActiveWindowsSkuStatus 获取系统激活状态
