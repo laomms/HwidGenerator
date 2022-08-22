@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 using System.Xml;
 using static System.Net.Mime.MediaTypeNames;
 
-namespace gatherosstate
+namespace HwidGenerator
 {
     internal class Program
     {

@@ -1,0 +1,2 @@
+C:\Users\ltsc2021\Desktop\HwidGenerator\gatherosstate\gatherosstate\obj\Debug\HwidGenerator.csproj.AssemblyReference.cache
+C:\Users\ltsc2021\Desktop\HwidGenerator\gatherosstate\gatherosstate\obj\Debug\HwidGenerator.csproj.CoreCompileInputs.cache
