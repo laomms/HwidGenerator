@@ -10,6 +10,7 @@ using System.Diagnostics;
 using System.IO;
 
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Security.Cryptography;
 
 namespace HwidGetCurrentEx
 {
@@ -53,17 +54,7 @@ namespace HwidGetCurrentEx
     {
         public static StringHWID stringHwid = new StringHWID();
         public static StructHWID structHwid = new StructHWID();
-        static byte[] signByte = new byte[] { 0, 0xE, 1, 2, 3, 4, 0xF, 5, 6, 7, 8, 9, 0xA, 0xC };
-        static uint[] SHA256Magic = new uint[] {
-            0x428A2F98, 0x71374491, 0xB5C0FBCF, 0xE9B5DBA5, 0x3956C25B, 0x59F111F1, 0x923F82A4, 0xAB1C5ED5,
-            0xD807AA98, 0x12835B01, 0x243185BE, 0x550C7DC3, 0x72BE5D74, 0x80DEB1FE, 0x9BDC06A7, 0xC19BF174,
-            0xE49B69C1, 0xEFBE4786, 0x0FC19DC6, 0x240CA1CC, 0x2DE92C6F, 0x4A7484AA, 0x5CB0A9DC, 0x76F988DA,
-            0x983E5152, 0xA831C66D, 0xB00327C8, 0xBF597FC7, 0xC6E00BF3, 0xD5A79147, 0x06CA6351, 0x14292967,
-            0x27B70A85, 0x2E1B2138, 0x4D2C6DFC, 0x53380D13, 0x650A7354, 0x766A0ABB, 0x81C2C92E, 0x92722C85,
-            0xA2BFE8A1, 0xA81A664B, 0xC24B8B70, 0xC76C51A3, 0xD192E819, 0xD6990624, 0xF40E3585, 0x106AA070,
-            0x19A4C116, 0x1E376C08, 0x2748774C, 0x34B0BCB5, 0x391C0CB3, 0x4ED8AA4A, 0x5B9CCA4F, 0x682E6FF3,
-            0x748F82EE, 0x78A5636F, 0x84C87814, 0x8CC70208, 0x90BEFFFA, 0xA4506CEB, 0xBEF9A3F7, 0xC67178F2 };
-
+        static byte[] signByte = new byte[] { 0, 0xE, 1, 2, 3, 4, 0xF, 5, 6, 7, 8, 9, 0xA, 0xC };       
         static uint[] MemoryMagic = new uint[] { 0x00000000, 0x10000000, 0x00000000, 0x20000000, 0x00000000, 0x40000000, 0x00000000, 0x60000000, 0x00000000, 0x80000000, 0x00000000, 0xC0000000, 0x00000000, 0x40000000, 0x00000000 };
 
         private static byte[] ObjectToByteArray(Object obj)
@@ -77,17 +68,8 @@ namespace HwidGetCurrentEx
 
             return ms.ToArray();
         }
-        private static Object ByteArrayToObject(byte[] arrBytes)
-        {
-            MemoryStream memStream = new MemoryStream();
-            BinaryFormatter binForm = new BinaryFormatter();
-            memStream.Write(arrBytes, 0, arrBytes.Length);
-            memStream.Seek(0, SeekOrigin.Begin);
-            Object obj = (Object)binForm.Deserialize(memStream);
 
-            return obj;
-        }
-        public static String HwidCreateBlock(byte[] arrayHWID, int cbsize)
+        public static string HwidCreateBlock(byte[] arrayHWID, int cbsize)
         {
             byte[] bytearray = new byte[] { 0x0, 0x2, 0x0, 0x1, 0x1, 0x0, 0x2, 0x5, 0x0, 0x3, 0x1, 0x0, 0x4, 0x2, 0x0, 0x6, 0x1, 0x0, 0x8, 0x7, 0x0, 0x9, 0x3, 0x0, 0xA, 0x1, 0x0, 0xC, 0x7, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 };
             var buffersize = cbsize + 6 + 0x25;
@@ -976,12 +958,10 @@ namespace HwidGetCurrentEx
         #region AddInstanceHash
         static ushort AddInstanceHash(byte[] buffer, uint cbsize, bool readable)
         {
-            Debug.Print(Encoding.Unicode.GetString(buffer) + Environment.NewLine);
-            Debug.Print(Encoding.UTF8.GetString(buffer) + Environment.NewLine);
-            uint[] bSHA256Init = SHA256Init();
-            SHA256Update(ref bSHA256Init, buffer, cbsize);
-            uint[] DST = SHA256Final(ref bSHA256Init);
-            ushort result = (ushort)(DST[0] & 0xFFFE);
+            SHA256Managed hasher = new SHA256Managed();
+            byte[] Bytes = hasher.ComputeHash(buffer.Take((int)cbsize).ToArray());
+            Debug.Print(BitConverter.ToString(Bytes).Replace("-", " "));
+            ushort result = (ushort)(((Bytes[1] << 8) | Bytes[0]) & 0xFFFE);
             if (!readable)
             {
                 result |= 1;
@@ -990,314 +970,7 @@ namespace HwidGetCurrentEx
         }
         #endregion
 
-        #region SHA256
-        static uint[] SHA256Init()
-        {
-            uint[] arr = new uint[0x1C * 4];
-            uint[] SHA256Init = { 0x6A09E667, 0xBB67AE85, 0x3C6EF372, 0xA54FF53A, 0x510E527F, 0x9B05688C, 0x1F83D9AB, 0x5BE0CD19, 0x00000000, 0x00000000 };
-            Buffer.BlockCopy(SHA256Init, 0, arr, 0, SHA256Init.Length * 4);
-            return arr;
-        }
-        static void SHA256Update(ref uint[] SHA256Init, byte[] buffer, uint cbsize)
-        {
-            int len = 0;
-            byte[] bytes = new byte[0];
-            if (buffer.Length % 4 != 0)
-            {
-                buffer = buffer.Concat(new byte[4 - (buffer.Length % 4)]).ToArray();
-            }
-            uint[] result = new uint[buffer.Length / 4];
-            Buffer.BlockCopy(buffer, 0, result, 0, buffer.Length);  //byte[] to uint[]          
-            byte[] bSHA256Init = SHA256Init.SelectMany(BitConverter.GetBytes).ToArray();
-            var value1 = cbsize + bSHA256Init[0x24];
-            var value2 = bSHA256Init[0x24] & 0x3F;
-            int value3 = bSHA256Init[0x24] & 0x3F;
-            bSHA256Init[0x24] = (byte)value1;
-            SHA256Init[9] = (byte)value1;
-            if (value1 < cbsize)
-            {
-                ++bSHA256Init[0x20];
-            }
-            var size = value2 + cbsize;
-            if ((value2 != 0) && (size == value2 + cbsize) && ((uint)(value2 + cbsize) >= 0x40))
-            {
-                Buffer.BlockCopy(buffer, 0, SHA256Init, value2 + 0x28, 0x40 - value2);
-                cbsize = (uint)(size - 64);
-                uint[] buf = new uint[(SHA256Init.Length - 0x28) * 4];
-                Buffer.BlockCopy(SHA256Init, 40, buf, 0, (SHA256Init.Length - 0x28) * 4);
-                uint[] newbyte = SHA256Transform(ref SHA256Init, buf);
-                bytes = new byte[buffer.Length - (0x40 - value3)];
-                Buffer.BlockCopy(buffer, 0x40 - value3, bytes, 0, buffer.Length - (0x40 - value3));
-                len = bytes.Length;
-            }
-            if (len >= 3)
-            {
-                if (cbsize >= 0x40)
-                {
-                    uint[] newArray = new uint[bSHA256Init.Length - 0x28];
-                    Buffer.BlockCopy(SHA256Init, 0x28, newArray, 0, newArray.Length);
-                    int i = (int)(cbsize >> 6);
-                    do
-                    {
-                        if (cbsize > 0)
-                        {
-                            Buffer.BlockCopy(bytes, 0, newArray, 0, 0x40);
-                            uint[] newbyte = SHA256Transform(ref SHA256Init, newArray);
-                            Buffer.BlockCopy(bSHA256Init, 0, newArray, 0, 0x28);
-                            Buffer.BlockCopy(buffer, 0x40, result, 0, buffer.Length - 0x40);
-                            buffer = buffer.Skip(0x40).ToArray();
-                            cbsize -= 0x40;
-                            i--;
-                        }
-                    } while (i != 0);
-                }
-            }
-            if (cbsize >= 0x40)
-            {
-                int flag = (int)(cbsize >> 6);
-                do
-                {
-                    uint[] newbyte = SHA256Transform(ref SHA256Init, result);
-                    cbsize -= 0x40;
-                    if (cbsize > 0)
-                    {
-                        Buffer.BlockCopy(buffer, 0x40, result, 0, buffer.Length - 0x40);
-                        buffer = buffer.Skip(0x40).ToArray();
-                        --flag;
-                    }
-                } while (flag != 0);
-            }
-            if (cbsize > 0)
-            {
-                Buffer.BlockCopy(result, 0, SHA256Init, value3 + 40, (int)cbsize);
-            }
-        }
-        static uint[] SHA256Transform(ref uint[] SHA256Init, uint[] buffer)
-        {
-            uint[] DST = SHA256Init;
-            uint[] newbyte1 = new uint[16];
-            int n = 0;
-            uint value = 0;
-            uint val = 0;
-            while (n < 16)
-            {
-                byte[] b = BitConverter.GetBytes(buffer[n]).Reverse().ToArray();
-                newbyte1[n] = BitConverter.ToUInt32(b, 0);
-                n += 1;
-            }
-            var sign1 = SHA256Init[1];
-            var sign4 = SHA256Init[4];
-            var sign3 = SHA256Init[3];
-            var sign0 = SHA256Init[0];
-            var sign2 = SHA256Init[2];
-            var sign5 = SHA256Init[5];
-            var sign6 = SHA256Init[6];
-            var sign7 = SHA256Init[7];
-            uint m = 0;
-            var _sign1 = sign1;
-            var _sign4 = sign4;
-            var _sign0 = sign0;
-            while (true)
-            {
-                var value1 = sign7 + newbyte1[m] + SHA256Magic[m] + (_sign4 & sign5 ^ sign6 & ~sign4) + (RotateRight(sign4, 6) ^ RotateRight(sign4, 11) ^ RotateRight(sign4, 25));
-                var value2 = value1 + sign3;
-                var value3 = _sign0 ^ sign1;
-                var value4 = _sign0 & sign1;
-                var value5 = value1 + (RotateRight(_sign0, 2) ^ RotateRight(_sign0, 13) ^ RotateRight(_sign0, 22)) + (value4 ^ sign2 & value3);
-                var value6 = sign6 + newbyte1[1 + m] + SHA256Magic[m + 1] + (value2 & _sign4 ^ sign5 & ~value2) + (RotateRight(value2, 6) ^ RotateRight(value2, 11) ^ RotateRight(value2, 25));
-                var value7 = value6 + sign2;
-                var value8 = value6 + (RotateRight(value5, 2) ^ RotateRight(value5, 13) ^ RotateRight(value5, 22)) + (value4 ^ value5 & value3);
-                var value9 = value8;
-                var value10 = sign5 + newbyte1[2 + m] + SHA256Magic[m + 2] + (value7 & value2 ^ _sign4 & ~value7) + (RotateRight(value7, 6) ^ RotateRight(value7, 11) ^ RotateRight(value7, 25));
-                var value11 = value10 + _sign1;
-                var value12 = value10 + (RotateRight(value9, 2) ^ RotateRight(value9, 13) ^ RotateRight(value9, 22)) + (_sign0 & value8 ^ value5 & (_sign0 ^ value8));
-                var value13 = _sign4 + newbyte1[3 + m] + SHA256Magic[m + 3] + (value11 & value7 ^ value2 & ~value11) + (RotateRight(value11, 6) ^ RotateRight(value11, 11) ^ RotateRight(value11, 25));
-                var value14 = value13 + _sign0;
-                var value15 = value13 + (RotateRight(value12, 2) ^ RotateRight(value12, 13) ^ RotateRight(value12, 22)) + (value12 & value8 ^ value5 & (value12 ^ value8));
-                var value16 = value2 + newbyte1[4 + m] + SHA256Magic[m + 4] + (value14 & value11 ^ value7 & ~value14) + (RotateRight(value14, 6) ^ RotateRight(value14, 11) ^ RotateRight(value14, 25));
-                sign7 = value16 + value5;
-                sign3 = value16 + (RotateRight(value15, 2) ^ RotateRight(value15, 13) ^ RotateRight(value15, 22)) + (value15 & value12 ^ value8 & (value15 ^ value12));
-                var value21 = sign3;
-                var value18 = value7 + newbyte1[5 + m] + SHA256Magic[m + 5] + (value14 & sign7 ^ value11 & ~sign7) + (RotateRight(sign7, 6) ^ RotateRight(sign7, 11) ^ RotateRight(sign7, 25));
-                sign6 = value18 + value9;
-                var values28 = value18 + (RotateRight(sign3, 2) ^ RotateRight(sign3, 13) ^ RotateRight(sign3, 22)) + (sign3 & value15 ^ value12 & (sign3 ^ value15));
-                sign2 = values28;
-                var value20 = value11 + newbyte1[6 + m] + SHA256Magic[m + 6] + (sign6 & sign7 ^ value14 & ~sign6) + (RotateRight(sign6, 6) ^ RotateRight(sign6, 11) ^ RotateRight(sign6, 25));
-                sign5 = value20 + value12;
-                _sign1 = value20 + (RotateRight(values28, 2) ^ RotateRight(values28, 13) ^ RotateRight(values28, 22)) + (values28 & sign3 ^ value15 & (values28 ^ sign3));
-                var value22 = newbyte1[7 + m] + SHA256Magic[m + 7] + (sign5 & sign6 ^ sign7 & ~sign5) + (RotateRight(sign5, 6) ^ RotateRight(sign5, 11) ^ RotateRight(sign5, 25));
-                m += 8;
-                var value23 = value14 + value22;
-                _sign4 = value23 + value15;
-                var value24 = value23 + (RotateRight(_sign1, 2) ^ RotateRight(_sign1, 13) ^ RotateRight(_sign1, 22));
-                var value25 = _sign1 & values28 ^ sign3 & (_sign1 ^ values28);
-                var value26 = value24 + value25;
-                _sign0 = value24 + value25;
-                if (m >= 0x10)
-                {
-                    break;
-                }
-                sign4 = _sign4;
-                sign1 = _sign1;
-            }
-            if (m < 0x40)
-            {
-                char a = (char)(m - 2);
-                int b = (int)(m - 7);
-                char c = (char)(m + 1);
-                int d = (int)(m - 2);
-                int e = (int)(m + 1);
-                do
-                {
-                    var values1 = newbyte1[m & 0xF];
-                    char t = (char)b;
-                    int i = b + 1;
-                    values1 += newbyte1[t & 0xF] + ((newbyte1[c & 0xF] >> 3) ^ RotateRight(newbyte1[c & 0xF], 7) ^ RotateRight(newbyte1[c & 0xF], 18)) + ((newbyte1[a & 0xF] >> 10) ^ RotateRight(newbyte1[a & 0xF], 17) ^ RotateRight(newbyte1[a & 0xF], 19));
-                    newbyte1[m & 0xF] = values1;
-
-                    var values2 = sign7 + values1 + SHA256Magic[m] + (_sign4 & sign5 ^ sign6 & ~_sign4) + (RotateRight(_sign4, 6) ^ RotateRight(_sign4, 11) ^ RotateRight(_sign4, 25));
-                    var values3 = values2 + sign3;
-                    int p = e + 1;
-                    int q = p;
-                    int y = (int)(d + 1);
-                    int s = y;
-                    var values4 = values2 + (RotateRight(_sign0, 2) ^ RotateRight(_sign0, 13) ^ RotateRight(_sign0, 22)) + (_sign0 & _sign1 ^ sign2 & (_sign0 ^ _sign1));
-                    var values5 = newbyte1[(m + 2) & 0xF];
-                    var values6 = newbyte1[(m + 1) & 0xF];
-                    int z = i++ & 0xF;
-                    values6 += newbyte1[z] + ((values5 >> 3) ^ RotateRight(values5, 7) ^ RotateRight(values5, 18)) + ((newbyte1[y & 0xF] >> 10) ^ RotateRight(newbyte1[y & 0xF], 17) ^ RotateRight(newbyte1[y & 0xF], 19));
-                    newbyte1[(m + 1) & 0xF] = values6;
-
-                    var values8 = sign6 + values6 + SHA256Magic[m + 1] + (values3 & _sign4 ^ sign5 & ~values3) + (RotateRight(values3, 6) ^ RotateRight(values3, 11) ^ RotateRight(values3, 25));
-                    var values9 = values8 + sign2;
-                    var values10 = values8 + (RotateRight(values4, 2) ^ RotateRight(values4, 13) ^ RotateRight(values4, 22)) + (_sign0 & _sign1 ^ values4 & (_sign0 ^ _sign1));
-                    int r = q + 1;
-                    int v = r;
-                    var values11 = newbyte1[(m + 3) & 0xF];
-                    var values12 = newbyte1[(m + 2) & 0xF];
-                    int x = i++ & 0xF;
-                    values12 += newbyte1[x] + ((values11 >> 3) ^ RotateRight(values11, 7) ^ RotateRight(values11, 18)) + ((newbyte1[(y + 1) & 0xF] >> 10) ^ RotateRight(newbyte1[(y + 1) & 0xF], 17) ^ RotateRight(newbyte1[(y + 1) & 0xF], 19));
-                    newbyte1[(m + 2) & 0xF] = values12;
-
-                    var values13 = sign5 + values12 + SHA256Magic[m + 2] + (values9 & values3 ^ _sign4 & ~values9) + (RotateRight(values9, 6) ^ RotateRight(values9, 11) ^ RotateRight(values9, 25));
-                    var values14 = values13 + _sign1;
-                    x = LOBYTE(v + 1);
-                    y = LOBYTE(y + 2);
-                    var values15 = values13 + (RotateRight(values10, 2) ^ RotateRight(values10, 13) ^ RotateRight(values10, 22)) + (_sign0 & values10 ^ values4 & (_sign0 ^ values10));
-                    var values16 = newbyte1[(m + 3) & 0xF];
-                    values16 += newbyte1[i++ & 0xF] + ((newbyte1[x & 0xF] >> 3) ^ RotateRight(newbyte1[x & 0xF], 7) ^ RotateRight(newbyte1[x & 0xF], 18)) + ((newbyte1[y & 0xF] >> 10) ^ RotateRight(newbyte1[y & 0xF], 17) ^ RotateRight(newbyte1[y & 0xF], 19));
-                    newbyte1[(m + 3) & 0xF] = values16;
-
-                    var values17 = _sign4 + values16 + SHA256Magic[m + 3] + (values14 & values9 ^ values3 & ~values14) + (RotateRight(values14, 6) ^ RotateRight(values14, 11) ^ RotateRight(values14, 25));
-                    var values18 = values17 + _sign0;
-                    x = LOBYTE(v + 2);
-                    var values19 = values17 + (RotateRight(values15, 2) ^ RotateRight(values15, 13) ^ RotateRight(values15, 22)) + (values15 & values10 ^ values4 & (values15 ^ values10));
-                    var values20 = newbyte1[(m + 4) & 0xF];
-                    values20 += newbyte1[i++ & 0xF] + ((newbyte1[x & 0xF] >> 3) ^ RotateRight(newbyte1[x & 0xF], 7) ^ RotateRight(newbyte1[x & 0xF], 18)) + ((newbyte1[(s + 3) & 0xF] >> 10) ^ RotateRight(newbyte1[(s + 3) & 0xF], 17) ^ RotateRight(newbyte1[(s + 3) & 0xF], 19));
-                    newbyte1[(m + 4) & 0xF] = values20;
-
-                    var values21 = values3 + values20 + SHA256Magic[m + 4] + (values18 & values14 ^ values9 & ~values18) + (RotateRight(values18, 6) ^ RotateRight(values18, 11) ^ RotateRight(values18, 25));
-                    sign7 = values21 + values4;
-                    x = LOBYTE(v + 3);
-                    var value21 = values21 + (RotateRight(values19, 2) ^ RotateRight(values19, 13) ^ RotateRight(values19, 22)) + (values19 & values15 ^ values10 & (values19 ^ values15));
-                    var values22 = newbyte1[(m + 5) & 0xF];
-                    values22 += newbyte1[i & 0xF] + ((newbyte1[x & 0xF] >> 3) ^ RotateRight(newbyte1[x & 0xF], 7) ^ RotateRight(newbyte1[x & 0xF], 18)) + ((newbyte1[(s + 4) & 0xF] >> 10) ^ RotateRight(newbyte1[(s + 4) & 0xF], 17) ^ RotateRight(newbyte1[(s + 4) & 0xF], 19));
-                    newbyte1[(m + 5) & 0xF] = values22;
-
-                    var values23 = values9 + values22 + SHA256Magic[m + 5] + (values18 & sign7 ^ values14 & ~sign7) + (RotateRight(sign7, 6) ^ RotateRight(sign7, 11) ^ RotateRight(sign7, 25));
-                    sign6 = values23 + values10;
-                    ++i;
-                    x = LOBYTE(v + 4);
-                    sign2 = values23 + (RotateRight(value21, 2) ^ RotateRight(value21, 13) ^ RotateRight(value21, 22)) + (value21 & values19 ^ values15 & (value21 ^ values19));
-                    var values24 = newbyte1[(m + 6) & 0xF];
-                    values24 += newbyte1[i & 0xF] + ((newbyte1[x & 0xF] >> 3) ^ RotateRight(newbyte1[x & 0xF], 7) ^ RotateRight(newbyte1[x & 0xF], 18)) + ((newbyte1[(s + 5) & 0xF] >> 10) ^ RotateRight(newbyte1[(s + 5) & 0xF], 17) ^ RotateRight(newbyte1[(s + 5) & 0xF], 19));
-                    newbyte1[(m + 6) & 0xF] = values24;
-
-                    var values25 = values14 + values24 + SHA256Magic[m + 6] + (sign6 & sign7 ^ values18 & ~sign6) + (RotateRight(sign6, 6) ^ RotateRight(sign6, 11) ^ RotateRight(sign6, 25));
-                    sign5 = values25 + values15;
-                    ++i;
-                    int h = v + 5;
-                    int f = h;
-                    int g = s + 6;
-                    int w = g;
-                    _sign1 = values25 + (RotateRight(sign2, 2) ^ RotateRight(sign2, 13) ^ RotateRight(sign2, 22)) + (sign2 & value21 ^ values19 & (sign2 ^ value21));
-                    var values26 = newbyte1[(m + 7) & 0xF];
-                    values26 += newbyte1[(i & 0xF)] + ((newbyte1[h & 0xF] >> 3) ^ RotateRight(newbyte1[h & 0xF], 7) ^ RotateRight(newbyte1[h & 0xF], 18)) + ((newbyte1[g & 0xF] >> 10) ^ RotateRight(newbyte1[g & 0xF], 17) ^ RotateRight(newbyte1[g & 0xF], 19));
-                    newbyte1[(m + 7) & 0xF] = values26;
-
-                    var values27 = values26 + SHA256Magic[m + 7] + (sign5 & sign6 ^ sign7 & ~sign5) + (RotateRight(sign5, 6) ^ RotateRight(sign5, 11) ^ RotateRight(sign5, 25));
-                    val = sign2;
-                    var values29 = values18 + values27;
-                    _sign4 = values29 + values19;
-                    sign3 = value21;
-                    m += 8;
-                    value = values29 + (RotateRight(_sign1, 2) ^ RotateRight(_sign1, 13) ^ RotateRight(_sign1, 22)) + (_sign1 & sign2 ^ value21 & (_sign1 ^ sign2));
-                    c = (char)(f + 1);
-                    b = i + 1;
-                    a = (char)(g + 1);
-                    _sign0 = value;
-                    e = f + 1;
-                    d = w + 1;
-                } while (m < 0x40);
-            }
-            var values = value + sign0;
-            DST[0] = values;
-            DST[3] += sign3;
-            DST[2] += val;
-            DST[1] += _sign1;
-            DST[4] += _sign4;
-            DST[5] += sign5;
-            DST[6] += sign6;
-            DST[7] += sign7;
-            Buffer.BlockCopy(DST, 0, SHA256Init, 0, DST.Length * 4);
-            return newbyte1;
-        }
-        static uint[] SHA256Final(ref uint[] bSHA256Init)
-        {
-            uint cbsize = 0x40 - (bSHA256Init[9] & 0x3F);
-            if (cbsize <= 8)
-            {
-                cbsize += 0x40;
-            }
-            byte[] Dst = new byte[cbsize - 8];
-            Dst[0] = 0x80;
-
-            uint value1 = (bSHA256Init[9] >> 29) | 8 * bSHA256Init[8];
-            uint value2 = 8 * bSHA256Init[9];
-            Dst = Dst.Concat(BitConverter.GetBytes(value1).Reverse().ToArray()).Concat(BitConverter.GetBytes(value2).Reverse().ToArray()).ToArray();
-            SHA256Update(ref bSHA256Init, Dst, cbsize);
-            //uint[] buffer = new uint[(bSHA256Init.Length - index) * 4];
-            //Buffer.BlockCopy(bSHA256Init, 0, buffer, 0, (bSHA256Init.Length - index) * 4);
-            uint[] newArray = new uint[8];
-            int i = 0;
-            do
-            {
-                uint val = BitConverter.ToUInt32(BitConverter.GetBytes(bSHA256Init[i]).Reverse().ToArray(), 0);
-                newArray[i] = val;
-                i++;
-            } while (i < 8);
-            bSHA256Init[8] = 0;
-            bSHA256Init[9] = 0;
-            bSHA256Init[0] = 0x6A09E667;
-            bSHA256Init[1] = 0xBB67AE85;
-            bSHA256Init[2] = 0x3C6EF372;
-            bSHA256Init[3] = 0xA54FF53A;
-            bSHA256Init[4] = 0x510E527F;
-            bSHA256Init[5] = 0x9B05688C;
-            bSHA256Init[6] = 0x1F83D9AB;
-            bSHA256Init[7] = 0x5BE0CD19;
-            int n = 64 / 4;
-            i = 0;
-            do
-            {
-                bSHA256Init[10 + i] = 0;
-                i++;
-                --n;
-            } while (n != 0);
-            return newArray;
-        }
-
-        #endregion
+        
 
     }
 }
