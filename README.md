@@ -1,4 +1,5 @@
-.net写的数字证书生成工具
+##.net写的数字证书生成工具    
+通过IDA和反汇编后提取伪代码.通过x64dbg调试验证写成的c#代码    
 
 ![image](https://github.com/laomms/gatherosstate/blob/master/pic.png)   
 
