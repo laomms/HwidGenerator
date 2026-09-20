@@ -1,0 +1,2 @@
+E:\PROGRAM\HwidGenerator\HwidGenerator\obj\Debug\HwidGenerator.csproj.AssemblyReference.cache
+E:\PROGRAM\HwidGenerator\HwidGenerator\obj\Debug\HwidGenerator.csproj.CoreCompileInputs.cache

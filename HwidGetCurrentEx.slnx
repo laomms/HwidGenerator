@@ -3,6 +3,9 @@
     <Platform Name="Any CPU" />
     <Platform Name="x86" />
   </Configurations>
+  <Project Path="HwidGenerator/HwidGenerator.csproj" Id="728adad5-ad62-469b-8270-d47e34a11cb8">
+    <Platform Solution="*|x86" Project="x86" />
+  </Project>
   <Project Path="HwidGetCurrentEx/HwidGetCurrentEx.csproj" Id="053495d7-7335-4890-b187-925f8f150bc2">
     <Platform Solution="*|x86" Project="x86" />
   </Project>
