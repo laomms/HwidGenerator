@@ -1,285 +1,360 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Management;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace HwidGetCurrentEx
 {
-    public class SMBIOS
+    /// <summary>
+    /// Raw SMBIOS access, mirroring CSmBiosInformation. Structures come from
+    /// GetSystemFirmwareTable('RSMB') and, when that fails, from the WMI
+    /// MSSmBios_RawSMBiosTables class.
+    ///
+    /// Every failure path returns null / false, which is what the DLL does too: it ignores the
+    /// error, hashes a NULL buffer and ends up with the instance hash 0.
+    /// </summary>
+    internal static class SMBIOS
     {
-        public enum SMBIOSTableType : sbyte
+        private const byte EndOfTable = 0x7F;
+
+        private struct Structure
         {
-            BaseBoardInformation = 2,
-            BIOSInformation = 0,
-            BIOSLanguageInformation = 13,
-            CacheInformation = 7,
-            const_11 = 11,
-            EnclosureInformation = 3,
-            EndofTable = 0x7f,
-            GroupAssociations = 14,
-            MemoryArrayMappedAddress = 0x13,
-            MemoryControllerInformation = 5,
-            MemoryDevice = 0x11,
-            MemoryDeviceMappedAddress = 20,
-            MemoryErrorInformation = 0x12,
-            MemoryModuleInformation = 6,
-            OnBoardDevicesInformation = 10,
-            PhysicalMemoryArray = 0x10,
-            PortConnectorInformation = 8,
-            ProcessorInformation = 4,
-            SystemConfigurationOptions = 12,
-            SystemEventLog = 15,
-            SystemInformation = 1,
-            SystemSlotsInformation = 9
+            public byte Type;
+            public int Offset;   // offset of the formatted area inside the table
+            public int Length;   // length of the formatted area
+            public byte[] Table;
         }
-        [StructLayout(LayoutKind.Sequential)]
-        public struct SMBIOSTableHeader
+
+        #region raw table
+
+        /// <summary>
+        /// The structure area of the SMBIOS table, or null. GetSystemFirmwareTable prepends an
+        /// 8 byte RawSMBIOSData header that is stripped here; the WMI fallback has no header.
+        /// </summary>
+        private static byte[] GetStructureArea()
         {
-            public SMBIOSTableType type;
-            public byte length;
+            byte[] fromFirmware = TryGetFirmwareTable();
+            if (fromFirmware != null)
+                return fromFirmware;
+
+            return TryGetWmiTable();
+        }
+
+        private static byte[] TryGetFirmwareTable()
+        {
+            try
+            {
+                uint size = Native.GetSystemFirmwareTable(Native.FIRMWARE_TABLE_RSMB, 0, IntPtr.Zero, 0);
+                if (size < 8)
+                    return null;
+
+                IntPtr buffer = Marshal.AllocHGlobal((int)size);
+                try
+                {
+                    uint read = Native.GetSystemFirmwareTable(Native.FIRMWARE_TABLE_RSMB, 0, buffer, size);
+                    if (read < 8)
+                        return null;
+
+                    var raw = new byte[read];
+                    Marshal.Copy(buffer, raw, 0, (int)read);
+
+                    // RawSMBIOSData: Used20CallingMethod, Major, Minor, DmiRevision, DWORD Length
+                    uint length = BitConverter.ToUInt32(raw, 4);
+                    if (length != read - 8)
+                        return null;
+
+                    var area = new byte[length];
+                    Buffer.BlockCopy(raw, 8, area, 0, (int)length);
+                    return area;
+                }
+                finally
+                {
+                    Marshal.FreeHGlobal(buffer);
+                }
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static byte[] TryGetWmiTable()
+        {
+            try
+            {
+                using (var searcher = new ManagementObjectSearcher(
+                           "root\\wmi", "SELECT * FROM MSSmBios_RawSMBiosTables"))
+                {
+                    foreach (ManagementBaseObject obj in searcher.Get())
+                    {
+                        using (obj)
+                        {
+                            var data = obj["SMBiosData"] as byte[];
+                            if (data != null && data.Length > 0)
+                                return data;
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // No WMI / no firmware table - the caller treats this as "no SMBIOS".
+            }
+
+            return null;
+        }
+
+        #endregion
+
+        #region structure walking
+
+        private static IEnumerable<Structure> EnumerateStructures(byte[] table)
+        {
+            int position = 0;
+
+            while (position + 4 <= table.Length)
+            {
+                byte type = table[position];
+                int length = table[position + 1];
+
+                if (length < 4 || position + length > table.Length)
+                    yield break;
+
+                int end = position + length;
+
+                // String area: NUL terminated strings up to the double NUL.
+                int scan = end;
+                while (scan + 1 < table.Length && !(table[scan] == 0 && table[scan + 1] == 0))
+                    scan++;
+
+                yield return new Structure { Type = type, Offset = position, Length = length, Table = table };
+
+                if (type == EndOfTable)
+                    yield break;
+
+                position = scan + 2;
+            }
+        }
+
+        /// <summary>
+        /// SMBIOS strings are 1-based; index 0 means "no string". An index past the end of the
+        /// string area is an error in the DLL (0x8007000D), which makes the whole BIOS hash 0.
+        /// </summary>
+        private static string GetString(Structure s, byte index)
+        {
+            if (index == 0)
+                return string.Empty;
+
+            byte[] table = s.Table;
+            int position = s.Offset + s.Length;
+
+            for (int current = 1; ; current++)
+            {
+                if (position + 1 >= table.Length || (table[position] == 0 && table[position + 1] == 0))
+                    throw new InvalidOperationException("SMBIOS string index " + index + " is out of range.");
+
+                int end = position;
+                while (end < table.Length && table[end] != 0)
+                    end++;
+
+                if (current == index)
+                    return System.Text.Encoding.Default.GetString(table, position, end - position);
+
+                position = end + 1;
+            }
+        }
+
+        #endregion
+
+        #region BIOS
+
+        /// <summary>
+        /// The exact blob CHwidBiosDataCollector hashes:
+        ///   UUID(16 raw bytes at type 1 offset 8)
+        ///   + Manufacturer  (type 1, string index at offset 4)
+        ///   + ProductName   (type 1, offset 5)
+        ///   + SerialNumber  (type 1, offset 7)
+        ///   + BiosVendor    (type 0, offset 4)  -- appended last, after every type 1 field
+        /// No separators and no terminators inside the hashed range. Returns null when the DLL
+        /// would have ended up with a NULL buffer (nothing collected, or a malformed table).
+        /// </summary>
+        public static byte[] GetBiosBlob()
+        {
+            try
+            {
+                byte[] table = GetStructureArea();
+                if (table == null)
+                    return null;
+
+                var systemInformation = new List<byte>();
+                var biosInformation = new List<byte>();
+                int seen = 0;   // bit 0 = type 0 seen, bit 1 = type 1 seen
+
+                foreach (Structure s in EnumerateStructures(table))
+                {
+                    if (seen == 3)
+                        break;
+
+                    if (s.Type == 1)
+                    {
+                        if (s.Length >= 24)
+                        {
+                            for (int i = 0; i < 16; i++)
+                                systemInformation.Add(s.Table[s.Offset + 8 + i]);
+                        }
+
+                        if (s.Length < 8)
+                            return null;
+
+                        systemInformation.AddRange(Bytes(GetString(s, s.Table[s.Offset + 4])));
+                        systemInformation.AddRange(Bytes(GetString(s, s.Table[s.Offset + 5])));
+                        systemInformation.AddRange(Bytes(GetString(s, s.Table[s.Offset + 7])));
+                        seen |= 2;
+                    }
+                    else if (s.Type == 0)
+                    {
+                        if (s.Length < 5)
+                            return null;
+
+                        biosInformation.AddRange(Bytes(GetString(s, s.Table[s.Offset + 4])));
+                        seen |= 1;
+                    }
+                }
+
+                if (systemInformation.Count + biosInformation.Count == 0)
+                    return null;
+
+                systemInformation.AddRange(biosInformation);
+                return systemInformation.ToArray();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static byte[] Bytes(string value)
+        {
+            // SMBIOS strings are single byte; the DLL copies them verbatim.
+            return System.Text.Encoding.Default.GetBytes(value);
+        }
+
+        #endregion
+
+        #region installed memory
+
+        private struct MemoryArray
+        {
             public ushort Handle;
-        }
-        [StructLayout(LayoutKind.Sequential)]
-        public struct SMBIOSTableSystemInfo
-        {
-            public SMBIOSTableHeader header;
-            public byte manufacturer;
-            public byte productName;
-            public byte version;
-            public byte serialNumber;
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 0x10)]
-            public byte[] UUID;
-            //public byte[] WakeUpType;
-            //public byte[] SKUNumber;
-            //public byte[] Family;
-
-        }
-        [StructLayout(LayoutKind.Sequential)]
-        public struct SMBIOSTableBaseBoardInfo
-        {
-            public SMBIOSTableHeader header;
-            //public byte[] Manufacturer;
-            //public byte[] Product;
-            //public byte[] Version;
-            //public byte[] SN;
-            //public byte[] AssetTag;
-            //public byte[] FeatureFlags;
-            //public byte[] LocationInChassis;
-            //public ushort ChassisHandle;
-            //public byte[] Type;
-            //public byte[] NumObjHandle;
-            //public ushort pObjHandle;
-
-        }
-        [StructLayout(LayoutKind.Sequential)]
-        public struct SMBIOSTableEnclosureInfo
-        {
-            public SMBIOSTableHeader header;
-            //public byte[] Manufacturer;
-            //public byte[] Type;
-            //public byte[] Version;
-            //public byte[] SN;
-            //public byte[] AssetTag;
-            //public byte[] BootupState;
-            //public byte[] PowerSupplyState;
-            //public byte[] ThermalState;
-            //public byte[] SecurityStatus;
-            //public uint OEMDefine;
-            //public byte[] Height;
-            //public byte[] NumPowerCord;
-            //public byte[] ElementCount;
-            //public byte[] ElementRecordLength;
-            //public byte[] pElements;
-
-        }
-        [StructLayout(LayoutKind.Sequential)]
-        public struct SMBIOSTableProcessorInfo
-        {
-            public SMBIOSTableHeader header;
-            //public byte[] socketDesignation;
-            //public byte[] processorType;
-            //public byte[] processorFamily;
-            //public byte[] processorManufacturer;
-            //public ulong processorID;
-            //public byte[] processorVersion;
-            //public byte[] processorVoltage;
-            //public ushort externalClock;
-            //public ushort maxSpeed;
-            //public ushort currentSpeed;
-            //public byte[] status;
-            //public byte[] processorUpgrade;
-            //public ushort L1CacheHandler;
-            //public ushort L2CacheHandler;
-            //public ushort L3CacheHandler;
-            //public byte[] serialNumber;
-            //public byte[] assetTag;
-            //public byte[] partNumber;
-        }
-        [StructLayout(LayoutKind.Sequential)]
-        public struct SMBIOSTableCacheInfo
-        {
-            public SMBIOSTableHeader header;
-            //public byte[] socketDesignation;
-            //public long cacheConfiguration;
-            //public ushort maximumCacheSize;
-            //public ushort installedSize;
-            //public ushort supportedSRAMType;
-            //public ushort currentSRAMType;
-            //public byte[] cacheSpeed;
-            //public byte[] errorCorrectionType;
-            //public byte[] systemCacheType;
-            //public byte[] associativity;
+            public byte Use;
         }
 
-        [StructLayout(LayoutKind.Sequential, Pack = 1)]
-        public struct UnkownInfo
+        private struct MemoryDevice
         {
-            public SMBIOSTableHeader header;
-            // Todo, Here
-
-        }
-        [StructLayout(LayoutKind.Sequential, Pack = 1)]
-        public struct SHAInfo
-        {
-            public SMBIOSTableHeader header;
-            public int size;
-            public byte cache;            
-        }
-
-        [StructLayout(LayoutKind.Sequential, Pack = 1)]
-        public struct PhysicalMemoryArray
-        {
-            public SMBIOSTableHeader header;
-            //public byte SwapableNumber;
-            public uint EmptyPageNumber;
-            public uint TotalPageNumber;            
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct BIOSInformation
-        {
-            public SMBIOSTableHeader header;
-            public byte vendor;
-            public byte version;
-            public ushort startingSegment;
-            public byte releaseDate;
-            public byte biosRomSize;
-            public ulong characteristics;
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
-            public byte[] extensionBytes;
-            //public IntPtr MajorRelease;
-            //public byte[] MajorRelease;
-            //public byte[] MinorRelease;
-            //public byte[] ECFirmwareMajor;
-            //public byte[] ECFirmwareMinor;
-        }
-
-        [StructLayout(LayoutKind.Sequential, Pack = 1)]
-        public struct MemCtrlInfo
-        {
-            public SMBIOSTableHeader header;
-            // Todo, Here
-
-        }
-
-        [StructLayout(LayoutKind.Sequential, Pack = 1)]
-        public struct MemModuleInfo
-        {
-            public SMBIOSTableHeader header;
-            public byte SocketDesignation;
-            public byte BankConnections;
-            public byte CurrentSpeed;
-            // Todo, Here
-        }
-
-        [StructLayout(LayoutKind.Sequential, Pack = 1)]
-        public struct OemString
-        {
-            public SMBIOSTableHeader header;
-            //public byte[] Count;
-        }
-
-        [StructLayout(LayoutKind.Sequential, Pack = 1)]
-        public struct MemoryArrayMappedAddress
-        {
-            public SMBIOSTableHeader header;
-            public uint Starting;
-            public uint Ending;
-            public ushort Handle;
-            public byte PartitionWidth;
-        }
-
-        [StructLayout(LayoutKind.Sequential, Pack = 1)]
-        public struct BuiltinPointDevice
-        {
-            public SMBIOSTableHeader header;
-            //public byte[] Type;
-            //public byte[] Interface;
-            //public byte[] NumOfButton;
-        }
-
-        [StructLayout(LayoutKind.Sequential, Pack = 1)]
-        public struct PortableBattery
-        {
-            public SMBIOSTableHeader header;
-            //public byte[] Location;
-            //public byte[] Manufacturer;
-            //public byte[] Date;
-            //public byte[] SN;
-            //public byte[] DeviceName;
-            //public byte[] Chemistry;
-            //public ushort DesignCapacity;
-            //public ushort DesignVoltage;
-            //public byte[] SBDSVersionNumber;
-            //public byte[] MaximumErrorInBatteryData;
-            //public ushort SBDSSerialNumber;
-            //public ushort SBDSManufactureDate;
-            //public byte[] SBDSDeviceChemistry;
-            //public byte[] DesignCapacityMultiplie;
-            //public uint OEM;
-        }
-
-        [StructLayout(LayoutKind.Sequential, Pack = 1)]
-        public struct MemoryDevice
-        {
-            public SMBIOSTableHeader header;
-            public ushort PhysicalArrayHandle;
-            public ushort ErrorInformationHandle;
-            public ushort TotalWidth;
-            public ushort DataWidth;
+            public ushort ArrayHandle;
             public ushort Size;
-            //public byte[] FormFactor;
-            //public byte[] DeviceSet;
-            //public byte[] DeviceLocator;
-            //public byte[] BankLocator;
-            //public byte[] MemoryType;
-            //public ushort TypeDetail;
-            //public ushort Speed;
-            //public byte[] Manufacturer;
-            //public byte[] SN;
-            //public byte[] AssetTag;
-            //public byte[] PN;
-            //public byte[] Attributes;
+            public uint ExtendedSize;
         }
 
-        [StructLayout(LayoutKind.Sequential)]
-        public struct RawSMBIOSData
+        /// <summary>
+        /// Port of CSmBiosInformation::GetInstalledMemorySize. Only type 17 devices whose
+        /// physical array (type 16) reports Use == 3 ("system memory") count towards the total,
+        /// and the 0x7FFF / 0x8000..0xFFFF sentinels and the Extended Size field at offset 28
+        /// all have to be honoured. The result is in kilobytes.
+        /// </summary>
+        public static bool TryGetInstalledMemorySize(out ulong kilobytes)
         {
-            public byte Used20CallingMethod;
-            public byte SMBIOSMajorVersion;
-            public byte SMBIOSMinorVersion;
-            public byte DmiRevision;
-            public uint Length;
-            //[MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
-            //public byte[] SMBIOSTableData;
-            //public GStruct0 BiosInfo;
-            //public SMBIOSTableSystemInfo SystemInfo;
-            //public SMBIOSTableBaseBoardInfo BaseBoardInfo;
-            //public SMBIOSTableEnclosureInfo EnclosureInfo;
-            //public SMBIOSTableProcessorInfo ProcessorInfo;
-            //public SMBIOSTableCacheInfo CacheInfo;
+            kilobytes = 0;
+
+            try
+            {
+                byte[] table = GetStructureArea();
+                if (table == null)
+                    return false;
+
+                var arrays = new List<MemoryArray>();
+                var devices = new List<MemoryDevice>();
+
+                foreach (Structure s in EnumerateStructures(table))
+                {
+                    if (s.Type == 0x10)
+                    {
+                        if (s.Length < 6)
+                            return false;
+
+                        arrays.Add(new MemoryArray
+                        {
+                            Handle = BitConverter.ToUInt16(s.Table, s.Offset + 2),
+                            Use = s.Table[s.Offset + 5],
+                        });
+                    }
+                    else if (s.Type == 0x11)
+                    {
+                        if (s.Length < 14)
+                            return false;
+
+                        devices.Add(new MemoryDevice
+                        {
+                            ArrayHandle = BitConverter.ToUInt16(s.Table, s.Offset + 4),
+                            Size = BitConverter.ToUInt16(s.Table, s.Offset + 12),
+                            ExtendedSize = s.Length >= 32 ? BitConverter.ToUInt32(s.Table, s.Offset + 28) : 0u,
+                        });
+                    }
+                }
+
+                if (devices.Count == 0)
+                    return false;
+
+                ulong total = 0;
+                foreach (MemoryDevice device in devices)
+                {
+                    // The DLL keeps the type 16 array sorted by handle purely so it can binary
+                    // search it; the answer is the same either way.
+                    int index = arrays.FindIndex(a => a.Handle == device.ArrayHandle);
+                    if (index < 0)
+                        return false;
+
+                    if (arrays[index].Use != 3)   // 3 == "system memory"
+                        continue;
+
+                    ulong size = device.Size;
+
+                    if (size == 0x7FFF)
+                    {
+                        size = device.ExtendedSize;
+                        if (size == 0 || size > 0x7FFFFFFFUL)
+                            return false;
+                        size <<= 10;
+                    }
+                    else if (size >= 0x8000)
+                    {
+                        if (size == 0xFFFF || device.ExtendedSize != 0)
+                            return false;
+                        // 0x8000..0xFFFE is taken verbatim, with no scaling.
+                    }
+                    else
+                    {
+                        if (device.ExtendedSize != 0)
+                            return false;
+                        size <<= 10;
+                    }
+
+                    ulong next = total + size;
+                    if (next < total)
+                        return false;
+
+                    total = next;
+                }
+
+                kilobytes = total;
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
+
+        #endregion
     }
 }

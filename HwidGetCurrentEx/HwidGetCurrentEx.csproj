@@ -94,14 +94,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BitUtil.cs" />
-    <Compile Include="ComHelper.cs" />
     <Compile Include="CPUID.cs" />
     <Compile Include="GUID_DEVINTERFACE.cs" />
+    <Compile Include="HwidCollectors.cs" />
     <Compile Include="Native.cs" />
     <Compile Include="HWID.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SMBIOS.cs" />
+    <Compile Include="Wwan.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

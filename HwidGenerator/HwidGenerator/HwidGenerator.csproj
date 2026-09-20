@@ -62,9 +62,8 @@
     <ApplicationManifest>Properties\app.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="HwidGetCurrentEx, Version=1.0.0.0, Culture=neutral, processorArchitecture=x86">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\HwidGetCurrentEx\bin\x86\Debug\HwidGetCurrentEx.dll</HintPath>
+    <Reference Include="HwidGetCurrentEx">
+      <HintPath>..\..\HwidGetCurrentEx\bin\Debug\HwidGetCurrentEx.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

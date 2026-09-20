@@ -1,0 +1,78 @@
+{
+  "format": 1,
+  "restore": {
+    "E:\\PROGRAM\\gatherosstate\\HwidGetCurrentEx\\HwidGetCurrentEx.csproj": {}
+  },
+  "projects": {
+    "E:\\PROGRAM\\gatherosstate\\HwidGetCurrentEx\\HwidGetCurrentEx.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "E:\\PROGRAM\\gatherosstate\\HwidGetCurrentEx\\HwidGetCurrentEx.csproj",
+        "projectName": "HwidGetCurrentEx",
+        "projectPath": "E:\\PROGRAM\\gatherosstate\\HwidGetCurrentEx\\HwidGetCurrentEx.csproj",
+        "packagesPath": "C:\\Users\\bkkmm\\.nuget\\packages\\",
+        "outputPath": "E:\\PROGRAM\\gatherosstate\\HwidGetCurrentEx\\obj\\",
+        "projectStyle": "PackageReference",
+        "skipContentFileWrite": true,
+        "UsingMicrosoftNETSdk": false,
+        "configFilePaths": [
+          "E:\\PROGRAM\\gatherosstate\\NuGet.Config",
+          "C:\\Users\\bkkmm\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\DevExpress 25.1.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net472"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net472": {
+            "framework": "net472",
+            "projectReferences": {}
+          }
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net472": {
+          "framework": "net472",
+          "dependencies": {
+            "Vanara.PInvoke.CfgMgr32": {
+              "target": "Package",
+              "version": "[5.0.7, )"
+            },
+            "Vanara.PInvoke.Kernel32": {
+              "target": "Package",
+              "version": "[5.0.7, )"
+            },
+            "Vanara.PInvoke.SetupApi": {
+              "target": "Package",
+              "version": "[5.0.7, )"
+            }
+          }
+        }
+      },
+      "runtimes": {
+        "win": {
+          "#import": []
+        },
+        "win-arm64": {
+          "#import": []
+        },
+        "win-x64": {
+          "#import": []
+        },
+        "win-x86": {
+          "#import": []
+        }
+      }
+    }
+  }
+}

@@ -1,133 +1,78 @@
-﻿using Microsoft.Win32.SafeHandles;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace HwidGetCurrentEx
 {
-
-
-    public static partial class Native
+    /// <summary>
+    /// The whole Win32 surface this assembly needs. Declared by hand on purpose: the tool ships
+    /// as a single Costura-embedded exe, and a P/Invoke wrapper library would drag a dozen extra
+    /// assemblies (System.Memory, Vanara.Core, ...) plus binding redirects along with it.
+    ///
+    /// Everything here mirrors what LicensingWinRT.dll itself calls, including the awkward
+    /// details: SetupDiEnumDeviceInfo needs a zeroed SP_DEVINFO_DATA with cbSize preset,
+    /// SP_DEVICE_INTERFACE_DETAIL_DATA has a 4/8 byte cbSize that depends on the bitness, and
+    /// the CM_* calls from cfgmgr32 return CONFIGRET, not a Win32 error.
+    /// </summary>
+    internal static class Native
     {
+        // ---------------------------------------------------------------- IOCTLs
+        public const uint IOCTL_STORAGE_QUERY_PROPERTY  = 0x002D1400;
+        public const uint IOCTL_NDIS_QUERY_GLOBAL_STATS = 0x00170002;
+        public const uint IOCTL_BTH_GET_LOCAL_INFO      = 0x00410000;
 
-        public const int ERROR_INVALID_HANDLE_VALUE = -1;
-        public const uint GENERIC_READ = 0x80000000;
-        public const uint GENERIC_WRITE = 0x40000000;
-        public const uint FILE_SHARE_READ = 0x00000001;
-        public const uint FILE_SHARE_WRITE = 0x00000002;
-        public const uint OPEN_EXISTING = 3;
+        /// <summary>OID_802_3_PERMANENT_ADDRESS - the only NDIS OID the collector asks for.</summary>
+        public const uint OID_802_3_PERMANENT_ADDRESS   = 0x01010101;
 
-        public const uint IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS = 0x00560000;
-        public const uint IOCTL_STORAGE_QUERY_PROPERTY = 0x2D1400;
-        public const uint IOCTL_BTH_GET_LOCAL_INFO = 0x410000;
-        public const uint IOCTL_NDIS_QUERY_GLOBAL_STATS = 0x170002;
-        public const uint PERMANENT_ADDRESS= 0x1010101;
-        public const uint RSMB = 1381190978;
+        /// <summary>'RSMB' firmware table provider signature.</summary>
+        public const uint FIRMWARE_TABLE_RSMB           = 0x52534D42;
 
-        public enum DI_FUNCTION 
-        {
-            DIF_SELECTDEVICE = 0x00000001,
-            DIF_INSTALLDEVICE = 0x00000002,
-            DIF_ASSIGNRESOURCES = 0x00000003,
-            DIF_PROPERTIES = 0x00000004,
-            DIF_REMOVE = 0x00000005,
-            DIF_FIRSTTIMESETUP = 0x00000006,
-            DIF_FOUNDDEVICE = 0x00000007,
-            DIF_SELECTCLASSDRIVERS = 0x00000008,
-            DIF_VALIDATECLASSDRIVERS = 0x00000009,
-            DIF_INSTALLCLASSDRIVERS = 0x0000000A,
-            DIF_CALCDISKSPACE = 0x0000000B,
-            DIF_DESTROYPRIVATEDATA = 0x0000000C,
-            DIF_VALIDATEDRIVER = 0x0000000D,
-            DIF_MOVEDEVICE = 0x0000000E,
-            DIF_DETECT = 0x0000000F,
-            DIF_INSTALLWIZARD = 0x00000010,
-            DIF_DESTROYWIZARDDATA = 0x00000011,
-            DIF_PROPERTYCHANGE = 0x00000012,
-            DIF_ENABLECLASS = 0x00000013,
-            DIF_DETECTVERIFY = 0x00000014,
-            DIF_INSTALLDEVICEFILES = 0x00000015,
-            DIF_UNREMOVE = 0x00000016,
-            DIF_SELECTBESTCOMPATDRV = 0x00000017,
-            DIF_ALLOW_INSTALL = 0x00000018,
-            DIF_REGISTERDEVICE = 0x00000019,
-            DIF_NEWDEVICEWIZARD_PRESELECT = 0x0000001A,
-            DIF_NEWDEVICEWIZARD_SELECT = 0x0000001B,
-            DIF_NEWDEVICEWIZARD_PREANALYZE = 0x0000001C,
-            DIF_NEWDEVICEWIZARD_POSTANALYZE = 0x0000001D,
-            DIF_NEWDEVICEWIZARD_FINISHINSTALL = 0x0000001E,
-            DIF_UNUSED1 = 0x0000001F,
-            DIF_INSTALLINTERFACES = 0x00000020,
-            DIF_DETECTCANCEL = 0x00000021,
-            DIF_REGISTER_COINSTALLERS = 0x00000022,
-            DIF_ADDPROPERTYPAGE_ADVANCED = 0x00000023,
-            DIF_ADDPROPERTYPAGE_BASIC = 0x00000024,
-            DIF_RESERVED1 = 0x00000025,
-            DIF_TROUBLESHOOTER = 0x00000026,
-            DIF_POWERMESSAGEWAKE = 0x00000027,
-            DIF_ADDREMOTEPROPERTYPAGE_ADVANCED = 0x00000028,
-            DIF_UPDATEDRIVER_UI = 0x00000029,
-            DIF_RESERVED2 = 0x00000030,
-        };
+        // ------------------------------------------------------------- constants
+        public const int  ERROR_NOT_FOUND            = 2;
+        public const int  ERROR_INVALID_DATA         = 13;
+        public const int  ERROR_NO_MORE_ITEMS        = 259;
 
+        public const uint GENERIC_READ   = 0x80000000;
+        public const uint OPEN_EXISTING  = 3;
 
+        /// <summary>SetupDiGetClassDevs flags.</summary>
+        public const int DIGCF_PRESENT         = 0x02;
+        public const int DIGCF_ALLCLASSES      = 0x04;
+        public const int DIGCF_DEVICEINTERFACE = 0x10;
+
+        /// <summary>SPDRP_HARDWAREID - a REG_MULTI_SZ; the property the PnP collectors hash.</summary>
+        public const uint SPDRP_HARDWAREID = 0x01;
+
+        /// <summary>Raw property 0x1F, the one HwidGetPnPRemovalPolicy reads.</summary>
+        public const uint SPDRP_REMOVAL_POLICY = 0x1F;
+
+        /// <summary>CM_DRP_ENUMERATOR_NAME - how IsSoftwareDevice spots "SWD" devices.</summary>
+        public const uint CM_DRP_ENUMERATOR_NAME = 0x17;
+
+        /// <summary>DN_ROOT_ENUMERATED - bit 0 of the CM_Get_DevNode_Status status word.</summary>
+        public const uint DN_ROOT_ENUMERATED = 0x1;
+
+        public const uint CONFIGRET_SUCCESS = 0;
+
+        public const int STORAGE_DEVICE_DESCRIPTOR_SIZE = 36;
+
+        // ------------------------------------------------------------ structures
         [StructLayout(LayoutKind.Sequential)]
-        public struct MEMORYSTATUSEX
+        public struct SP_DEVINFO_DATA
         {
-            public uint dwLength;
-            public uint dwMemoryLoad;
-            public ulong ullTotalPhys;
-            public ulong ullAvailPhys;
-            public ulong ullTotalPageFile;
-            public ulong ullAvailPageFile;
-            public ulong ullTotalVirtual;
-            public ulong ullAvailVirtual;
-            public ulong ullAvailExtendedVirtual;
+            public uint cbSize;
+            public Guid ClassGuid;
+            public uint DevInst;
+            public IntPtr Reserved;
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        public class HWProfile
+        public struct SP_DEVICE_INTERFACE_DATA
         {
-            public Int32 dwDockInfo;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 39)]
-            public string szHwProfileGuid;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 80)]
-            public string szHwProfileName;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public class DISK_EXTENT
-        {
-            public uint DiskNumber;
-            public long StartingOffset;
-            public long ExtentLength;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public class VOLUME_DISK_EXTENTS
-        {
-            public uint NumberOfDiskExtents;
-            public DISK_EXTENT Extents;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct DEVICE_SEEK_PENALTY_DESCRIPTOR
-        {
-            public readonly uint Version;
-            public readonly uint Size;
-            [MarshalAs(UnmanagedType.U1)]
-            public readonly bool IncursSeekPenalty;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct STORAGE_DESCRIPTOR_HEADER
-        {
-            public uint Version;
-            public uint Size;
+            public uint cbSize;
+            public Guid InterfaceClassGuid;
+            public uint Flags;
+            public IntPtr Reserved;
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -145,271 +90,247 @@ namespace HwidGetCurrentEx
             public uint SerialNumberOffset;
             public byte BusType;
             public uint RawPropertiesLength;
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
-            public byte[] RawDeviceProperties;
-        }
-
-
-        public enum WWAN_INTERFACE_STATE
-        {
-             WwanInterfaceStateNotReady = 0,
-            WwanInterfaceStateDeviceLocked = 1,
-            WwanInterfaceStateUserAccountNotActivated = 2,
-            WwanInterfaceStateRegistered = 3,
-            WwanInterfaceStateRegistering = 4,
-            WwanInterfaceStateDeregistered = 5,
-            WwanInterfaceStateAttached = 6,
-            WwanInterfaceStateAttaching = 7,
-            WwanInterfaceStateDetaching = 8,
-            WwanInterfaceStateActivated = 9,
-            WwanInterfaceStateActivating = 10,
-            WwanInterfaceStateDeactivating = 11
-        }
-
-        public  struct WWAN_INTERFACE_STATUS
-        {
-            bool fInitialized;
-            WWAN_INTERFACE_STATE InterfaceState;
-        }
-        public struct WWAN_INTERFACE_INFO
-        {
-            public Guid InterfaceGuid;
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 256)]
-            public byte[] strInterfaceDescription;
-            public WWAN_INTERFACE_STATUS InterfaceStatus;
-            public int dwReserved1;
-            public Guid guidReserved;
-            public Guid ParentInterfaceGuid;
-            public int dwReserved2;
-            public int dwIndex;
-            public int dwReserved3;
-            public int dwReserved4;
-        }
-        public struct WWAN_INTERFACE_INFO_LIST
-        {
-            public int dwNumberOfItems;
-            public WWAN_INTERFACE_INFO[] InterfaceInfo;
-        }
-
-
-
-
-
-#if !WIN64
-        [StructLayout(LayoutKind.Sequential, Pack = 2, CharSet = CharSet.Unicode)]
-#else  
-        [StructLayout(LayoutKind.Sequential, Pack = 8, CharSet = CharSet.Unicode)]
-#endif
-        public struct SP_DRVINFO_DATA
-        {
-            public int cbSize;
-            public uint DriverType;
-            public UIntPtr Reserved;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
-            public string Description;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
-            public string MfgName;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
-            public string ProviderName;
-            public System.Runtime.InteropServices.ComTypes.FILETIME DriverDate;
-            public ulong DriverVersion;
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        public struct STORAGE_PROPERTY_QUERY
+        public struct MEMORYSTATUSEX
         {
-            public Int32 PropertyId;
-            public Int32 QueryType;
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
-            public byte[] AdditionalParameters;
+            public uint dwLength;
+            public uint dwMemoryLoad;
+            public ulong ullTotalPhys;
+            public ulong ullAvailPhys;
+            public ulong ullTotalPageFile;
+            public ulong ullAvailPageFile;
+            public ulong ullTotalVirtual;
+            public ulong ullAvailVirtual;
+            public ulong ullAvailExtendedVirtual;
         }
 
+        // ------------------------------------------------------------- setupapi
+        [DllImport("setupapi.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        public static extern IntPtr SetupDiGetClassDevsW(IntPtr classGuid, IntPtr enumerator,
+                                                         IntPtr hwndParent, int flags);
 
-        [StructLayout(LayoutKind.Sequential)]
-        public struct HidD_Attributes
-        { public int Size; public ushort VendorID; public ushort ProductID; public ushort VersionNumber; }
-
-#if !WIN64
-        [StructLayout(LayoutKind.Sequential, Pack = 2, CharSet = CharSet.Unicode)]
-#else  
-        [StructLayout(LayoutKind.Sequential, Pack = 8, CharSet = CharSet.Unicode)]
-#endif
-        public struct SP_DRVINFO_DETAIL_DATA
-        {
-            public Int32 cbSize;
-            public System.Runtime.InteropServices.ComTypes.FILETIME InfDate;
-            public Int32 CompatIDsOffset;
-            public Int32 CompatIDsLength;
-            public IntPtr Reserved;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
-            public String SectionName;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
-            public String InfFileName;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
-            public String DrvDescription;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 1)]
-            public String HardwareID;
-        };
-
-        [Flags]
-        public enum DiGetClassFlags : uint
-        {
-            DIGCF_DEFAULT = 0x00000001,
-            DIGCF_PRESENT = 0x00000002,
-            DIGCF_ALLCLASSES = 0x00000004,
-            SPDRP_UNUSED2 = 0x00000006,
-            DIGCF_PROFILE = 0x00000008,
-            DIGCF_DEVICEINTERFACE = 0x00000010,
-        }
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
-        public struct SP_DEVICE_INTERFACE_DATA
-        {
-            public uint cbSize;
-            public Guid InterfaceClassGuid;
-            public uint Flags;
-            public IntPtr Reserved;
-        }
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
-        public struct SP_DEVINFO_DATA
-        {
-            public uint cbSize;
-            public Guid ClassGuid;
-            public uint DevInst;
-            public IntPtr Reserved;
-        }
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto, Pack = 1)]
-        public struct NativeDeviceInterfaceDetailData
-        {
-            public int size;
-            public char devicePath;
-        }
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
-        public struct SP_DEVICE_INTERFACE_DETAIL_DATA
-        {
-            public int cbSize;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 512)]
-            public string DevicePath;
-        }
-
-        [DllImport("setupapi.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        public static extern bool SetupDiGetDriverInfoDetail(IntPtr DeviceInfoSet, ref SP_DEVINFO_DATA DeviceInfoData, ref SP_DRVINFO_DATA DriverInfoData, ref SP_DRVINFO_DETAIL_DATA DriverInfoDetailData, Int32 DriverInfoDetailDataSize, ref Int32 RequiredSize);
-
-        [DllImport("setupapi.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        public static extern bool SetupDiEnumDriverInfo(IntPtr DeviceInfoSet, ref SP_DEVINFO_DATA DeviceInfoData, int DriverType, int MemberIndex, ref SP_DRVINFO_DATA DriverInfoData);
-
-        [DllImport("setupapi.dll", CharSet = CharSet.Auto)]
-        public static extern IntPtr SetupDiGetClassDevs(ref Guid ClassGuid, [MarshalAs(UnmanagedType.LPTStr)] string Enumerator, IntPtr hwndParent, uint Flags);
-
-        [DllImport("setupapi.dll", CharSet = CharSet.Auto)]
-        public static extern IntPtr SetupDiGetClassDevs(ref Guid ClassGuid, IntPtr Enumerator, IntPtr hwndParent, int Flags);
-
-        [DllImport("setupapi.dll", CharSet = CharSet.Auto)]
-        public static extern IntPtr SetupDiGetClassDevs(IntPtr ClassGuid, [MarshalAs(UnmanagedType.LPTStr)] string Enumerator, IntPtr hwndParent, int Flags);
+        [DllImport("setupapi.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        public static extern IntPtr SetupDiGetClassDevsW(ref Guid classGuid, IntPtr enumerator,
+                                                         IntPtr hwndParent, int flags);
 
         [DllImport("setupapi.dll", SetLastError = true)]
-        public static extern IntPtr SetupDiGetClassDevsW([In] ref Guid ClassGuid, [MarshalAs(UnmanagedType.LPWStr)] string Enumerator, IntPtr parent, int flags);
-
-        [DllImport("setupapi.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        public static extern bool SetupDiEnumDeviceInterfaces(IntPtr hDevInfo, IntPtr devInfo, ref Guid interfaceClassGuid, uint memberIndex, ref SP_DEVICE_INTERFACE_DATA deviceInterfaceData);
-
-        [DllImport("setupapi.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        public static extern bool SetupDiGetDeviceInterfaceDetailW(IntPtr hDevInfo, ref SP_DEVICE_INTERFACE_DATA deviceInterfaceData,ref SP_DEVICE_INTERFACE_DETAIL_DATA deviceInterfaceDetailData, uint deviceInterfaceDetailDataSize, out uint requiredSize, ref SP_DEVINFO_DATA deviceInfoData);
-
-        [DllImport("setupapi.dll", ExactSpelling = true, SetLastError = true, CharSet = CharSet.Unicode)]
-        public static extern bool SetupDiGetDeviceInterfaceDetailW(IntPtr hDevInfo, ref SP_DEVICE_INTERFACE_DATA deviceInterfaceData, IntPtr deviceInterfaceDetailData, uint deviceInterfaceDetailDataSize, out uint requiredSize, IntPtr deviceInfoData);
+        public static extern bool SetupDiEnumDeviceInfo(IntPtr deviceInfoSet, uint memberIndex,
+                                                        ref SP_DEVINFO_DATA deviceInfoData);
 
         [DllImport("setupapi.dll", SetLastError = true)]
-        public static extern bool SetupDiDestroyDeviceInfoList(IntPtr DeviceInfoSet);
+        public static extern bool SetupDiEnumDeviceInterfaces(IntPtr deviceInfoSet, IntPtr deviceInfoData,
+                                                              ref Guid interfaceClassGuid, uint memberIndex,
+                                                              ref SP_DEVICE_INTERFACE_DATA deviceInterfaceData);
+
+        [DllImport("setupapi.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        public static extern bool SetupDiGetDeviceInterfaceDetailW(IntPtr deviceInfoSet,
+                                                                   ref SP_DEVICE_INTERFACE_DATA deviceInterfaceData,
+                                                                   IntPtr deviceInterfaceDetailData,
+                                                                   uint deviceInterfaceDetailDataSize,
+                                                                   out uint requiredSize,
+                                                                   IntPtr deviceInfoData);
+
+        [DllImport("setupapi.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        public static extern bool SetupDiGetDeviceRegistryPropertyW(IntPtr deviceInfoSet,
+                                                                    ref SP_DEVINFO_DATA deviceInfoData,
+                                                                    uint property, out uint propertyRegDataType,
+                                                                    IntPtr propertyBuffer, uint propertyBufferSize,
+                                                                    out uint requiredSize);
 
         [DllImport("setupapi.dll", SetLastError = true)]
-        public static extern bool SetupDiEnumDeviceInfo(IntPtr DeviceInfoSet, uint MemberIndex, ref SP_DEVINFO_DATA DeviceInfoData);
+        public static extern bool SetupDiDestroyDeviceInfoList(IntPtr deviceInfoSet);
 
-        [DllImport("setupapi.dll")]
-        public static extern int CM_Get_Parent(ref IntPtr pdnDevInst, IntPtr dnDevInst, int ulFlags);
+        // ------------------------------------------------------------- cfgmgr32
+        [DllImport("cfgmgr32.dll", CharSet = CharSet.Unicode, ExactSpelling = true)]
+        public static extern uint CM_Get_DevNode_Registry_PropertyW(uint devInst, uint property,
+                                                                    out uint regDataType, IntPtr buffer,
+                                                                    ref uint length, uint flags);
 
-        [DllImport("kernel32.dll")]
-        public static extern uint GetLastError();
+        [DllImport("cfgmgr32.dll")]
+        public static extern uint CM_Get_DevNode_Status(out uint status, out uint problemNumber,
+                                                        uint devInst, uint flags);
 
-        [DllImport("cfgmgr32.dll", EntryPoint = "CM_Get_DevNode_Registry_PropertyW", ExactSpelling = true, CharSet = CharSet.Auto)]
-        public static extern int CM_Get_DevNode_Registry_PropertyW(IntPtr dnDevInst, int ulProperty, ref int pulRegDataType, IntPtr Buffer, ref int pulLength, int ulFlags);
+        [DllImport("cfgmgr32.dll")]
+        public static extern uint CM_Get_Parent(out uint parentDevInst, uint devInst, uint flags);
 
-        [DllImport("cfgmgr32.dll", EntryPoint = "CM_Get_DevNode_Registry_PropertyA", ExactSpelling = true, CharSet = CharSet.Ansi, SetLastError = true)]
-        public static extern int CM_Get_DevNode_Registry_Property(IntPtr dnDevInst, int ulProperty, ref int pulRegDataType, ref IntPtr Buffer, ref int pulLength, int ulFlags);
+        [DllImport("cfgmgr32.dll", CharSet = CharSet.Unicode, ExactSpelling = true)]
+        public static extern uint CM_Get_Device_IDW(uint devInst, IntPtr buffer, uint bufferLen, uint flags);
 
+        // --------------------------------------------------------------- kernel
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, ExactSpelling = true, SetLastError = true)]
+        public static extern IntPtr CreateFileW(string lpFileName, uint dwDesiredAccess, uint dwShareMode,
+                                                IntPtr lpSecurityAttributes, uint dwCreationDisposition,
+                                                uint dwFlagsAndAttributes, IntPtr hTemplateFile);
 
-        [DllImport("cfgmgr32.dll", SetLastError = true)]
-        public static extern int CM_Get_DevNode_Status(ref int status, ref int probNum, IntPtr devInst, int flags);
+        [DllImport("kernel32.dll", ExactSpelling = true, SetLastError = true)]
+        public static extern bool DeviceIoControl(IntPtr hDevice, uint dwIoControlCode, IntPtr lpInBuffer,
+                                                  int nInBufferSize, IntPtr lpOutBuffer, int nOutBufferSize,
+                                                  out uint lpBytesReturned, IntPtr lpOverlapped);
 
-        [DllImport("setupapi.dll", SetLastError = true)]
-        public static extern int CM_Get_Device_ID(IntPtr pdnDevInst, ref IntPtr buffer, int bufferLen, int flags);
-
-        [DllImport("setupapi.dll", SetLastError = true)]
-        public static extern int CM_Get_Device_IDW(IntPtr pdnDevInst, IntPtr Buffer, uint bufferLen, uint flags);
-
-        [DllImport("setupapi.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        public static extern bool SetupDiGetDeviceRegistryProperty(IntPtr deviceInfoSet, ref SP_DEVINFO_DATA deviceInfoData, uint property, int propertyRegDataType, IntPtr propertyBuffer, uint propertyBufferSize, ref int requiredSize);
-
-        [DllImport("setupapi.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        public static extern bool SetupDiGetDeviceRegistryPropertyW(IntPtr deviceInfoSet, ref SP_DEVINFO_DATA deviceInfoData, int property,  int propertyRegDataType, byte[] propertyBuffer, int propertyBufferSize, out int requiredSize);
-
-
-        [DllImport("msvcrt.dll", EntryPoint = "memcpy", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        public static extern IntPtr memcpy(IntPtr dest, IntPtr src, UIntPtr count);
+        [DllImport("kernel32.dll", EntryPoint = "GetSystemFirmwareTable", SetLastError = true)]
+        public static extern uint GetSystemFirmwareTable(uint FirmwareTableProviderSignature,
+                                                         uint FirmwareTableID, IntPtr pFirmwareTableBuffer,
+                                                         uint BufferSize);
 
         [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern IntPtr CreateFile(string lpFileName, uint dwDesiredAccess, uint dwShareMode, uint lpSecurityAttributes, uint dwCreationDisposition, uint dwFlagsAndAttributes, uint hTemplateFile);
-
-        [DllImport("kernel32.dll", ExactSpelling = true, SetLastError = true, CharSet = CharSet.Unicode)]
-        public static extern IntPtr CreateFileW(string filename, uint dwDesiredAccess, uint dwShareMode, uint lpSecurityAttributes, uint dwCreationDisposition, uint dwFlagsAndAttributes, uint hTemplateFile);
-
+        public static extern bool GlobalMemoryStatusEx(ref MEMORYSTATUSEX lpBuffer);
 
         [DllImport("kernel32.dll", ExactSpelling = true, SetLastError = true)]
         public static extern bool CloseHandle(IntPtr hObject);
 
-        [DllImport("hid.dll", ExactSpelling = true)]
-        public static extern bool HidD_GetAttributes(IntPtr HidDeviceObject, ref HidD_Attributes Attributes);
+        // --------------------------------------------------------------- helpers
+        public static bool IsValidHandle(IntPtr h)
+        {
+            return h != IntPtr.Zero && h != new IntPtr(-1);
+        }
 
-        [DllImport("kernel32.dll", ExactSpelling = true, SetLastError = true)]
-        public static extern bool DeviceIoControl(IntPtr hDevice, uint dwIoControlCode, IntPtr lpInBuffer, int nInBufferSize, IntPtr lpOutBuffer, int nOutBufferSize, out uint lpBytesReturned, IntPtr lpOverlapped);
+        public static SP_DEVINFO_DATA NewDevInfoData()
+        {
+            return new SP_DEVINFO_DATA { cbSize = (uint)Marshal.SizeOf(typeof(SP_DEVINFO_DATA)) };
+        }
 
-        [DllImport("kernel32.dll", ExactSpelling = true, SetLastError = true)]
-        public static extern bool DeviceIoControl(IntPtr hDevice, uint dwIoControlCode,ref uint lpInBuffer, int nInBufferSize, IntPtr lpOutBuffer, int nOutBufferSize, out uint lpBytesReturned, IntPtr lpOverlapped);
+        public static SP_DEVICE_INTERFACE_DATA NewInterfaceData()
+        {
+            return new SP_DEVICE_INTERFACE_DATA { cbSize = (uint)Marshal.SizeOf(typeof(SP_DEVICE_INTERFACE_DATA)) };
+        }
 
-        [DllImport("advapi32.dll", SetLastError = true)]
-        public static extern bool GetCurrentHwProfile(IntPtr fProfile);
+        /// <summary>
+        /// The two call SetupDiGetDeviceInterfaceDetail dance, done the way the DLL does it:
+        /// ask for the required size, then hand back a buffer whose first DWORD is the
+        /// bitness dependent cbSize and whose path starts four bytes in.
+        /// </summary>
+        public static bool GetDeviceInterfaceDetail(IntPtr deviceInfoSet,
+                                                    ref SP_DEVICE_INTERFACE_DATA deviceInterfaceData,
+                                                    out string devicePath,
+                                                    out SP_DEVINFO_DATA deviceInfoData)
+        {
+            devicePath = null;
+            deviceInfoData = NewDevInfoData();
 
-        [DllImport("kernel32")]
-        public static extern bool GlobalMemoryStatusEx(ref MEMORYSTATUSEX stat);
+            uint requiredSize;
+            SetupDiGetDeviceInterfaceDetailW(deviceInfoSet, ref deviceInterfaceData,
+                                             IntPtr.Zero, 0, out requiredSize, IntPtr.Zero);
 
-        [DllImport("kernel32.dll", EntryPoint = "GetSystemFirmwareTable")]
-        public static extern uint GetSystemFirmwareTable(uint FirmwareTableProviderSignature, uint FirmwareTableID, IntPtr pFirmwareTableBuffer, uint BufferSize);
+            // The DLL rejects anything that cannot even hold cbSize + a NUL.
+            if (requiredSize < 8)
+                return false;
 
-        [DllImport("kernel32", SetLastError = true, CharSet = CharSet.Ansi)]
-        public static extern IntPtr LoadLibrary([MarshalAs(UnmanagedType.LPStr)] string lpFileName);
+            IntPtr detail = Marshal.AllocHGlobal((int)requiredSize);
+            int devInfoBytes = Marshal.SizeOf(typeof(SP_DEVINFO_DATA));
+            IntPtr info = Marshal.AllocHGlobal(devInfoBytes);
+            try
+            {
+                Marshal.WriteInt32(detail, IntPtr.Size == 8 ? 8 : 4 + Marshal.SystemDefaultCharSize);
+                Marshal.Copy(new byte[devInfoBytes], 0, info, devInfoBytes);
+                Marshal.WriteInt32(info, 0, devInfoBytes);
 
-        [DllImport("kernel32", CharSet = CharSet.Ansi, ExactSpelling = true, SetLastError = true)]
-        public static extern IntPtr GetProcAddress(IntPtr hModule, string procName);
+                if (!SetupDiGetDeviceInterfaceDetailW(deviceInfoSet, ref deviceInterfaceData,
+                                                      detail, requiredSize, out requiredSize, info))
+                    return false;
 
-        [DllImport("wwapi.dll", CharSet = CharSet.Ansi, ExactSpelling = true, SetLastError = true)]
-        public static extern int WwanOpenHandle(int dwClientVersion, IntPtr pReserved, out int pdwNegotiatedVersion, out IntPtr phClientHandle);
+                devicePath = Marshal.PtrToStringUni(new IntPtr(detail.ToInt64() + 4));
+                deviceInfoData = (SP_DEVINFO_DATA)Marshal.PtrToStructure(info, typeof(SP_DEVINFO_DATA));
+                return devicePath != null;
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(detail);
+                Marshal.FreeHGlobal(info);
+            }
+        }
 
-        [DllImport("wwapi.dll", CharSet = CharSet.Ansi, ExactSpelling = true, SetLastError = true)]
-        public static extern int WwanCloseHandle(IntPtr hClientHandle, IntPtr pReserved);
+        /// <summary>Wraps CM_Get_Device_IDW with a correctly sized buffer.</summary>
+        public static uint GetDeviceId(uint devInst, int maxChars, out string deviceId)
+        {
+            deviceId = null;
 
-        [DllImport("wwapi.dll", CharSet = CharSet.Ansi, ExactSpelling = true, SetLastError = true)]
-        public static extern int WwanEnumerateInterfaces(IntPtr hClientHandle, int pdwReserved, out WWAN_INTERFACE_INFO_LIST ppInterfaceList);
+            int bytes = maxChars * 2;
+            IntPtr buffer = Marshal.AllocHGlobal(bytes);
+            try
+            {
+                uint cr = CM_Get_Device_IDW(devInst, buffer, (uint)maxChars, 0);
+                if (cr == CONFIGRET_SUCCESS)
+                    deviceId = Marshal.PtrToStringUni(buffer);
+                return cr;
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(buffer);
+            }
+        }
 
-        [DllImport("wwapi.dll", CharSet = CharSet.Ansi, ExactSpelling = true, SetLastError = true)]
-        public static extern int WwanFreeMemory(IntPtr pMem);
+        /// <summary>
+        /// Reimplementation of the DLL's AddPropertyString(): appends one NUL-terminated field
+        /// taken at <paramref name="offset"/> inside <paramref name="descriptor"/>. An offset of
+        /// 0 / 0xFFFFFFFE / 0xFFFFFFFF appends a bare NUL (an empty field).
+        /// </summary>
+        public static void AppendDescriptorString(byte[] descriptor, uint offset, List<byte> destination)
+        {
+            if (offset == 0 || offset >= 0xFFFFFFFE)
+            {
+                destination.Add(0);
+                return;
+            }
 
-        [DllImport("wwapi.dll", CharSet = CharSet.Ansi, ExactSpelling = true, SetLastError = true)]
-        public static extern int WwanSetInterface(IntPtr hClientHandle, Guid pInterfaceGuid, int OpCode, int dwDataSize, IntPtr pData, IntPtr pReserved1, IntPtr pReserved2, IntPtr pReserved3);
+            if (offset >= descriptor.Length)
+                throw new InvalidOperationException("STORAGE_DEVICE_DESCRIPTOR field offset is out of range.");
 
-        [DllImport("wwapi.dll", CharSet = CharSet.Ansi, ExactSpelling = true, SetLastError = true)]
-        public static extern int WlanQueryInterface(IntPtr hClientHandle, Guid pInterfaceGuid, int OpCode, IntPtr pReserved, out int pdwDataSize, out IntPtr ppData, out int pWlanOpcodeValueType);
+            for (uint i = offset; i < descriptor.Length; i++)
+            {
+                byte b = descriptor[i];
+                destination.Add(b);
+                if (b == 0)
+                    return;
+            }
 
-        [DllImport("rpcrt4.dll", SetLastError = true)]
-        public static extern int UuidCreateSequential(out System.Guid guid);
+            throw new InvalidOperationException("STORAGE_DEVICE_DESCRIPTOR field is not NUL terminated.");
+        }
+    }
 
+    /// <summary>
+    /// A zeroed unmanaged scratch buffer. The collectors need these constantly, and handing
+    /// them out through IDisposable keeps the FreeHGlobal out of the middle of the logic.
+    /// </summary>
+    internal sealed class UnmanagedBuffer : IDisposable
+    {
+        public IntPtr Pointer { get; }
+        public int Size { get; }
+
+        public UnmanagedBuffer(int size)
+        {
+            Size = size;
+            Pointer = Marshal.AllocHGlobal(size);
+            Zero();
+        }
+
+        /// <summary>Clears the buffer, as the DLL does before every DeviceIoControl.</summary>
+        public UnmanagedBuffer Zero()
+        {
+            for (int i = 0; i < Size; i++)
+                Marshal.WriteByte(Pointer, i, 0);
+            return this;
+        }
+
+        /// <summary>Copies up to <paramref name="count"/> bytes out.</summary>
+        public byte[] ToArray(int count)
+        {
+            int length = Math.Min(count, Size);
+            var bytes = new byte[length];
+            Marshal.Copy(Pointer, bytes, 0, length);
+            return bytes;
+        }
+
+        public byte[] ToArray() => ToArray(Size);
+
+        public int ReadInt32(int offset) => Marshal.ReadInt32(Pointer, offset);
+
+        /// <summary>Reads a NUL-terminated wide string that starts at <paramref name="offset"/>.</summary>
+        public string ReadUnicodeZ(int offset) => Marshal.PtrToStringUni(new IntPtr(Pointer.ToInt64() + offset));
+
+        public T ToStructure<T>() where T : struct => (T)Marshal.PtrToStructure(Pointer, typeof(T));
+
+        public void Dispose() => Marshal.FreeHGlobal(Pointer);
     }
 }
