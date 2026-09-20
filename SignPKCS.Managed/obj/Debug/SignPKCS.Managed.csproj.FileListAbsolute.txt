@@ -1,0 +1,6 @@
+D:\Projcet\SignPKCS.Managed\bin\Debug\SignPKCS.Managed.dll
+D:\Projcet\SignPKCS.Managed\bin\Debug\SignPKCS.Managed.pdb
+D:\Projcet\SignPKCS.Managed\obj\Debug\SignPKCS.Managed.csproj.AssemblyReference.cache
+D:\Projcet\SignPKCS.Managed\obj\Debug\SignPKCS.Managed.csproj.CoreCompileInputs.cache
+D:\Projcet\SignPKCS.Managed\obj\Debug\SignPKCS.Managed.dll
+D:\Projcet\SignPKCS.Managed\obj\Debug\SignPKCS.Managed.pdb

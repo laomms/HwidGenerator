@@ -1,0 +1,6 @@
+E:\PROGRAM\HwidGenerator\SignPKCS.Managed\bin\x86\Debug\SignPKCS.Managed.dll
+E:\PROGRAM\HwidGenerator\SignPKCS.Managed\bin\x86\Debug\SignPKCS.Managed.pdb
+E:\PROGRAM\HwidGenerator\SignPKCS.Managed\obj\x86\Debug\SignPKCS.Managed.csproj.AssemblyReference.cache
+E:\PROGRAM\HwidGenerator\SignPKCS.Managed\obj\x86\Debug\SignPKCS.Managed.csproj.CoreCompileInputs.cache
+E:\PROGRAM\HwidGenerator\SignPKCS.Managed\obj\x86\Debug\SignPKCS.Managed.dll
+E:\PROGRAM\HwidGenerator\SignPKCS.Managed\obj\x86\Debug\SignPKCS.Managed.pdb

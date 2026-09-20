@@ -1,0 +1,7 @@
+E:\PROGRAM\HwidGenerator\HwidGetCurrentEx\bin\x86\Debug\HwidGetCurrentEx.dll.config
+E:\PROGRAM\HwidGenerator\HwidGetCurrentEx\bin\x86\Debug\HwidGetCurrentEx.dll
+E:\PROGRAM\HwidGenerator\HwidGetCurrentEx\bin\x86\Debug\HwidGetCurrentEx.pdb
+E:\PROGRAM\HwidGenerator\HwidGetCurrentEx\obj\x86\Debug\HwidGetCurrentEx.csproj.AssemblyReference.cache
+E:\PROGRAM\HwidGenerator\HwidGetCurrentEx\obj\x86\Debug\HwidGetCurrentEx.csproj.CoreCompileInputs.cache
+E:\PROGRAM\HwidGenerator\HwidGetCurrentEx\obj\x86\Debug\HwidGetCurrentEx.dll
+E:\PROGRAM\HwidGenerator\HwidGetCurrentEx\obj\x86\Debug\HwidGetCurrentEx.pdb

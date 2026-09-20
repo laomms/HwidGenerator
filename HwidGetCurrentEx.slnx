@@ -9,4 +9,7 @@
   <Project Path="HwidGetCurrentEx/HwidGetCurrentEx.csproj" Id="053495d7-7335-4890-b187-925f8f150bc2">
     <Platform Solution="*|x86" Project="x86" />
   </Project>
+  <Project Path="SignPKCS.Managed/SignPKCS.Managed.csproj" Id="9e1c4a55-6f3b-4c2e-9d71-2a5b8e0f1c33">
+    <Platform Solution="Debug|x86" Project="x86" />
+  </Project>
 </Solution>
